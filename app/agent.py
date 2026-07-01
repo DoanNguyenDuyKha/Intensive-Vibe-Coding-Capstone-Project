@@ -307,12 +307,15 @@ def ui_generator_node(ctx: Context) -> dict:
     if not user_prompt:
         user_prompt = "Tạo bảng điều khiển doanh số chung cho Q3 và Q4."
 
+    update_msg = ctx.state.get("update_message") if isinstance(ctx.state, dict) else getattr(ctx.state, "update_message", None)
+    update_info = f'\n    SYSTEM ACTION STATUS: "{update_msg}"\n    (Please display a clean success notification card or label at the top of the dashboard layout to show the user that their data update was executed successfully.)\n' if update_msg else ""
+
     prompt = f"""
     {instructions}
 
     You MUST create a user interface that directly answers and satisfies the following user request:
     USER REQUEST: "{user_prompt}"
-    
+    {update_info}
     Available Sales Data (JSON):
     {raw_data}
 
