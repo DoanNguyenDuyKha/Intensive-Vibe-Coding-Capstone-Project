@@ -1,0 +1,48 @@
+metrics_to_run:
+  - visual_behavioral_correctness
+  - intent_satisfaction
+
+custom_metrics:
+  - name: visual_behavioral_correctness
+    prompt_template: |
+      You are an expert AI interface quality evaluator. Evaluate the visual and behavioral correctness of the agent's output.
+
+      Criteria (Visual / behavioral correctness):
+      - Score 1 (Poor): No valid UI structure is generated, or it includes raw HTML, CSS, or JS which are strictly forbidden.
+      - Score 2 (Below Average): Generates some JSON but it is invalid A2UI v0.9, or uses components outside the Basic Catalog (Column, Row, Text, Button, Card).
+      - Score 3 (Acceptable): Generates valid A2UI v0.9 JSON layout using only Basic Catalog components, but the layout is disorganized or hard to follow.
+      - Score 4 (Good): Generates well-structured, valid A2UI v0.9 layout. Visual layout makes logical sense for the sales data presentation.
+      - Score 5 (Excellent): Exceptionally organized, neat, and professional A2UI v0.9 layout. Perfectly follows the Basic Catalog rules and presents data clearly in structured Cards, Rows, and Columns.
+
+      ### Target Evaluation:
+      User Prompt: {prompt}
+      Final Response: {response}
+      Full Agent Trace: {agent_data}
+
+      Return your evaluation as a valid JSON object matching this structure:
+      {
+        "score": <integer between 1 and 5>,
+        "explanation": "<detailed string explaining the rationale for the score assigned>"
+      }
+
+  - name: intent_satisfaction
+    prompt_template: |
+      You are an expert evaluator. Evaluate how well the agent satisfies the user's intent based on the query and the fetched SQLite database sales data.
+
+      Criteria (Intent satisfaction):
+      - Score 1 (Poor): Completely fails to address the query or ignores the requested comparison/metrics.
+      - Score 2 (Below Average): Addresses the query but uses hallucinated data instead of fetching from the SQLite database.
+      - Score 3 (Acceptable): Fetches data from the database and answers the query, but misses key data points, fails to perform the comparison, or includes incorrect summaries.
+      - Score 4 (Good): Fetches correct data from the database, addresses all parts of the user prompt, and performs accurate calculations/comparisons.
+      - Score 5 (Excellent): Addresses the user's query perfectly with zero hallucination. Performs all requested comparisons or summarizations, displaying the exact database figures clearly.
+
+      ### Target Evaluation:
+      User Prompt: {prompt}
+      Final Response: {response}
+      Full Agent Trace: {agent_data}
+
+      Return your evaluation as a valid JSON object matching this structure:
+      {
+        "score": <integer between 1 and 5>,
+        "explanation": "<detailed string explaining the rationale for the score assigned>"
+      }

@@ -1,0 +1,37 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "compare_north_south_q4",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "So sánh doanh số Q4 giữa khu vực Bắc (North) và Nam (South)."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "revenue_by_product_category",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Hiển thị tổng doanh thu theo từng danh mục sản phẩm (Electronics, Furniture, Software) trong cả Q3 và Q4."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "top_rep_deal_size",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Tìm nhân viên bán hàng có kích thước thương vụ trung bình (avg_deal_size) lớn nhất và hiển thị chi tiết doanh số của họ."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A2UI Data Canvas - Sales Dashboard & Agentic IDE</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #f8fafc;
+      --bg-card: rgba(255, 255, 255, 0.8);
+      --bg-input: rgba(255, 255, 255, 0.9);
+      --border-card: rgba(0, 0, 0, 0.1);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --accent: #9333ea;
+      --accent-gradient: linear-gradient(135deg, #4f46e5, #9333ea);
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Custom elegant scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(241, 245, 249, 0.6);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.3);
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.6);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      height: 100vh;
+      max-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: rgba(248, 250, 252, 0.8);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-card);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 2.2rem;
+      height: 2.2rem;
+      background: var(--accent-gradient);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: white;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      background: linear-gradient(135deg, #0f172a, #475569);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .badge {
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+    }
+
+    .container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 65px);
+      min-height: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    /* Left Sidebar: Controls & Database */
+    .left-sidebar {
+      width: 420px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-card);
+      background: rgba(241, 245, 249, 0.6);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    textarea {
+      width: 100%;
+      height: 90px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 0.75rem;
+      font-family: var(--font-family);
+      font-size: 0.85rem;
+      line-height: 1.4;
+      resize: none;
+      transition: all 0.2s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn {
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      background: #334155;
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* SQLite Editor Table styles */
+    .db-editor-box {
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 0.75rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 250px;
+    }
+
+    .table-container {
+      flex: 1;
+      overflow: auto;
+      border: 1px solid var(--border-card);
+      border-radius: 6px;
+      margin-top: 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-card);
+    }
+
+    th {
+      background: #e2e8f0; /* Solid background prevents scroll overlap */
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      color: var(--text-main);
+      box-shadow: 0 1px 0 var(--border-card);
+    }
+
+    tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    td input {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      width: 100%;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    td input:focus {
+      outline: 1px solid var(--primary);
+      background: var(--bg-dark);
+      padding: 0.1rem;
+    }
+
+    /* Center Canvas Workspace */
+    .workspace {
+      flex: 1;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top, rgba(99, 102, 241, 0.05), transparent 60%);
+      overflow-y: auto;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* Right Sidebar: Tabs for Code & Agent Trace */
+    .right-sidebar {
+      width: 480px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border-card);
+      background: rgba(241, 245, 249, 0.8);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .tabs-header {
+      display: flex;
+      background: rgba(226, 232, 240, 0.8);
+      border-bottom: 1px solid var(--border-card);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 1rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(0,0,0,0.02);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+      border-bottom: 2px solid var(--primary);
+    }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+      display: none;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Agentic Trace Timeline */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      position: relative;
+      padding-left: 1.5rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 10px;
+      bottom: 10px;
+      width: 2px;
+      background: rgba(99, 102, 241, 0.2);
+    }
+
+    .timeline-item {
+      position: relative;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -24px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      border: 3px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timeline-dot.success { border-color: var(--success); }
+    .timeline-dot.warning { border-color: var(--warning); }
+    .timeline-dot.danger { border-color: var(--danger); }
+
+    .timeline-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 0.8rem;
+    }
+
+    .timeline-header {
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .timeline-node {
+      font-size: 0.7rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .timeline-body {
+      color: var(--text-muted);
+      line-height: 1.4;
+      white-space: pre-wrap;
+      max-height: 120px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      background: rgba(0,0,0,0.2);
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+    }
+
+    /* A2UI Component Render styles */
+    .a2ui-column {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+    }
+
+    .a2ui-row {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .a2ui-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .a2ui-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent-gradient);
+      opacity: 0.7;
+    }
+
+    .a2ui-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.15);
+    }
+
+    .a2ui-text-h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      background: linear-gradient(135deg, #1e293b, #4f46e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .a2ui-text-h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 0.5rem;
+    }
+
+    .a2ui-text-h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .a2ui-text-body {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .a2ui-text-caption {
+      font-size: 0.7rem;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .a2ui-button {
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1.25rem;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      align-self: flex-start;
+    }
+
+    .a2ui-button:hover {
+      filter: brightness(1.2);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .a2ui-button:active {
+      transform: scale(0.98);
+    }
+
+    /* Highlight card class for action triggers */
+    .a2ui-card.highlight {
+      border-color: var(--success);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+      animation: pulse-glow 2s infinite;
+    }
+
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.1); }
+      50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.3); }
+      100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.1); }
+    }
+
+    /* Shimmer Loading Skeleton */
+    .shimmer-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      width: 100%;
+    }
+
+    .shimmer {
+      background: linear-gradient(90deg, rgba(0, 0, 0, 0.03) 25%, rgba(0, 0, 0, 0.08) 50%, rgba(0, 0, 0, 0.03) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-pulse 1.5s infinite;
+      border-radius: 8px;
+    }
+
+    @keyframes shimmer-pulse {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .shimmer-title { height: 2.5rem; width: 60%; }
+    .shimmer-card { height: 120px; border-radius: 16px; }
+    .shimmer-row { display: flex; gap: 1rem; }
+    .shimmer-line { height: 1rem; width: 100%; margin-top: 0.5rem; }
+
+    /* Code Pane styling */
+    pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      overflow: auto;
+      line-height: 1.5;
+    }
+
+    /* Empty state styling */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+      gap: 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Bar Chart styles */
+    .chart-box {
+      margin-top: 2rem;
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      display: none;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+    }
+
+    .chart-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .chart-grid {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      height: 220px;
+      border-bottom: 2px solid var(--border-card);
+      padding-top: 1.5rem;
+      gap: 1rem;
+    }
+
+    .chart-bar-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .chart-bar {
+      width: 45px;
+      background: linear-gradient(to top, #6366f1, #a855f7);
+      border-radius: 6px 6px 0 0;
+      position: relative;
+      transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .chart-bar:hover {
+      filter: brightness(1.2);
+      box-shadow: 0 4px 25px rgba(168, 85, 247, 0.5);
+    }
+
+    .chart-bar-tooltip {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-dark);
+      border: 1px solid var(--border-card);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-main);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .chart-bar:hover .chart-bar-tooltip {
+      opacity: 1;
+    }
+
+    .chart-label {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">A2</div>
+      <span class="brand-title">A2UI Data Canvas Studio</span>
+    </div>
+    <div class="status-container">
+      <span class="badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #34d399;">
+        ● SQLite MCP Connected
+      </span>
+      <span class="badge">A2UI v0.9 Basic Catalog</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Left Panel: Controls & SQLite Table Editor -->
+    <div class="left-sidebar">
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <h3 class="section-title">Prompt Yêu cầu</h3>
+        <textarea id="promptInput" placeholder="Nhập truy vấn hiển thị dữ liệu...">So sánh doanh số Q4 giữa khu vực Bắc (North) và Nam (South).</textarea>
+        <button id="generateBtn" class="btn" onclick="triggerGeneration()">
+          <span>🎨 Generate Canvas</span>
+        </button>
+      </div>
+
+      <!-- Presets -->
+      <div>
+        <h3 class="section-title" style="margin-bottom: 0.5rem;">Mẫu Truy Vấn</h3>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem;">
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('So sánh doanh số Q4 giữa khu vực Bắc (North) và Nam (South).')">
+              👉 So sánh Bắc & Nam Q4
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('Hiển thị tổng doanh thu theo từng danh mục sản phẩm (Electronics, Furniture, Software) trong cả Q3 và Q4.')">
+              👉 Tổng doanh thu theo danh mục
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('Tìm nhân viên bán hàng có kích thước thương vụ trung bình (avg_deal_size) lớn nhất và hiển thị chi tiết doanh số của họ.')">
+              👉 Nhân viên bán hàng hàng đầu
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- SQLite Editor Box -->
+      <div class="db-editor-box">
+        <div class="section-header">
+          <h3 class="section-title">SQLite Live Data Editor</h3>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;" onclick="loadDbData(this)">🔄 Load</button>
+            <button class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; background: var(--success);" onclick="alert('Hệ thống tự động lưu khi bạn sửa số liệu! Hãy nhấn Generate Canvas để xem cập nhật.')">💾 Save</button>
+          </div>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-muted);">Sửa trực tiếp các ô số liệu (tự động lưu). Sau đó nhấn <strong>Generate Canvas</strong> để cập nhật UI.</p>
+        
+        <div class="table-container">
+          <table id="dbTable">
+            <thead>
+              <tr>
+                <th>Region</th>
+                <th>Quarter</th>
+                <th>Category</th>
+                <th>Revenue ($)</th>
+                <th>Sold</th>
+              </tr>
+            </thead>
+            <tbody id="dbTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted);">Đang tải dữ liệu SQLite...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Panel: The live rendering canvas -->
+    <div class="workspace" id="canvasPanel">
+      <div id="canvasRoot" style="width: 100%; min-height: 100%; display: flex; flex-direction: column;">
+        <div class="empty-state">
+          <span class="empty-icon">🎨</span>
+          <h3>Workspace Trống</h3>
+          <p>Nhập prompt hoặc chọn một mẫu truy vấn và nhấn Generate để vẽ giao diện Canvas.</p>
+        </div>
+      </div>
+      
+      <!-- Integrated Dynamic Bar Chart Box -->
+      <div class="chart-box" id="chartBox">
+        <div class="chart-title">📊 Biểu đồ Phân tích Doanh thu (Động)</div>
+        <div class="chart-grid" id="chartGrid"></div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Tabs for Agentic Trace & Raw JSON -->
+    <div class="right-sidebar">
+      <div class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab('traceTab', this)">
+          🧠 Agentic Trace
+        </button>
+        <button class="tab-btn" onclick="switchTab('jsonTab', this)">
+          📋 Hybrid Output JSON
+        </button>
+      </div>
+
+      <!-- Tab: Agent Trace -->
+      <div id="traceTab" class="tab-content active">
+        <div class="timeline" id="traceTimeline">
+          <div class="timeline-item">
+            <div class="timeline-dot success"></div>
+            <div class="timeline-card">
+              <div class="timeline-header">
+                <span>Khởi động Graph Workflow</span>
+                <span class="timeline-node">START</span>
+              </div>
+              <div class="timeline-body">Chờ tác nhân chạy truy vấn dữ liệu...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: JSON Code -->
+      <div id="jsonTab" class="tab-content">
+        <pre id="jsonBlock" style="flex:1; margin: 0; white-space: pre-wrap;">// Nhấp Generate để xem JSON phản hồi từ tác nhân...</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog/Modal helper for A2UI Action Binding -->
+  <div id="actionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.6); backdrop-filter:blur(5px); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:16px; padding:2rem; width:450px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+      <h2 style="font-size:1.5rem; margin-bottom:1rem; color:var(--text-main);" id="modalTitle">Hành động kích hoạt</h2>
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;" id="modalBody">Nút hành động của A2UI đã truyền tín hiệu thành công!</p>
+      <button class="a2ui-button" onclick="document.getElementById('actionModal').style.display='none'">Đóng</button>
+    </div>
+  </div>
+
+  <script>
+    let dbRows = [];
+    let currentRawJson = null;
+
+    // Load SQLite database data on startup
+    window.onload = function() {
+      loadDbData();
+    };
+
+    function setPrompt(promptText) {
+      document.getElementById('promptInput').value = promptText;
+    }
+
+    async function loadDbData(btnElement) {
+      if (btnElement) {
+        const originalText = btnElement.innerHTML;
+        btnElement.innerHTML = '⏳ Loading...';
+        btnElement.disabled = true;
+        setTimeout(() => { btnElement.innerHTML = originalText; btnElement.disabled = false; }, 500);
+      }
+      const tableBody = document.getElementById('dbTableBody');
+      try {
+        const response = await fetch('/api/sales');
+        if (!response.ok) throw new Error("Failed to fetch database data");
+        dbRows = await response.json();
+        
+        tableBody.innerHTML = '';
+        dbRows.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${row.region}</td>
+            <td>${row.quarter}</td>
+            <td title="${row.product_category}">${row.product_category.substring(0,6)}..</td>
+            <td>
+              <input type="number" value="${row.revenue}" onchange="updateDbRow(${row.id}, 'revenue', this.value)">
+            </td>
+            <td>
+              <input type="number" value="${row.units_sold}" onchange="updateDbRow(${row.id}, 'units_sold', this.value)">
+            </td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      } catch (err) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="color:var(--danger); text-align:center;">Lỗi: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function updateDbRow(id, field, value) {
+      const row = dbRows.find(r => r.id === id);
+      if (!row) return;
+
+      const numVal = parseFloat(value);
+      if (isNaN(numVal)) return;
+
+      row[field] = numVal;
+      // Calculate avg_deal_size = revenue / units_sold
+      const units = field === 'units_sold' ? numVal : row.units_sold;
+      const rev = field === 'revenue' ? numVal : row.revenue;
+      row.avg_deal_size = units > 0 ? (rev / units) : 0;
+
+      try {
+        const response = await fetch(`/api/sales/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            revenue: row.revenue,
+            units_sold: row.units_sold,
+            avg_deal_size: row.avg_deal_size
+          })
+        });
+        if (!response.ok) throw new Error("Failed to save changes to SQLite database.");
+      } catch (err) {
+        alert("Lỗi SQLite: " + err.message);
+      }
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    // Trigger A2UI Canvas Shimmer loading
+    function showShimmerSkeleton() {
+      const canvasRoot = document.getElementById('canvasRoot');
+      canvasRoot.innerHTML = `
+        <div class="shimmer-wrapper">
+          <div class="shimmer shimmer-title"></div>
+          <div class="shimmer-row">
+            <div class="shimmer shimmer-card" style="flex:1;"></div>
+            <div class="shimmer shimmer-card" style="flex:1;"></div>
+            <div class="shimmer shimmer-card" style="flex:1;"></div>
+          </div>
+          <div class="shimmer shimmer-card" style="height: 200px;"></div>
+          <div class="shimmer shimmer-line"></div>
+          <div class="shimmer shimmer-line" style="width: 80%;"></div>
+        </div>
+      `;
+    }
+
+    // Dynamic A2UI Component Rendering with graceful error fallbacks & icons
+    function renderA2uiCanvas(uiPayload) {
+      const canvasRoot = document.getElementById('canvasRoot');
+      canvasRoot.innerHTML = ''; // Clear shimmer
+
+      if (!uiPayload || !uiPayload.updateComponents || !uiPayload.updateComponents.components) {
+        throw new Error("Dữ liệu cấu trúc UI không hợp lệ hoặc thiếu trường 'updateComponents.components'");
+      }
+
+      const components = uiPayload.updateComponents.components;
+      const componentMap = {};
+
+      components.forEach(comp => {
+        if (comp.id) {
+          componentMap[comp.id] = comp;
+        }
+      });
+
+      if (!componentMap['root']) {
+        throw new Error("Không tìm thấy thành phần giao diện gốc (root component với id='root')");
+      }
+
+      // Add icons based on textual context
+      function enrichText(text) {
+        if (!text) return '';
+        let enriched = text;
+        if (text.includes("revenue") || text.includes("doanh thu") || text.includes("$")) {
+          enriched = "💵 " + enriched;
+        } else if (text.includes("rep") || text.includes("nhân viên") || text.includes("salesperson")) {
+          enriched = "👤 " + enriched;
+        } else if (text.includes("region") || text.includes("khu vực") || text.includes("North") || text.includes("South")) {
+          enriched = "📍 " + enriched;
+        } else if (text.includes("growth") || text.includes("tăng trưởng") || text.includes("so sánh")) {
+          enriched = "📈 " + enriched;
+        }
+        return enriched;
+      }
+
+      function renderNode(compId) {
+        const comp = componentMap[compId];
+        if (!comp) {
+          // Graceful fallback warning box instead of crash
+          const fallback = document.createElement('div');
+          fallback.className = 'a2ui-text a2ui-text-caption';
+          fallback.style.color = 'var(--warning)';
+          fallback.textContent = `[Missing component ID: ${compId}]`;
+          return fallback;
+        }
+
+        const type = comp.component;
+        let el = null;
+
+        switch (type) {
+          case 'Column':
+            el = document.createElement('div');
+            el.className = 'a2ui-column';
+            if (comp.justify) el.classList.add(`justify-${comp.justify}`);
+            if (comp.align) el.classList.add(`align-${comp.align}`);
+
+            if (comp.children) {
+              const childIds = Array.isArray(comp.children) ? comp.children : (comp.children.explicitList || []);
+              childIds.forEach(childId => {
+                const childEl = renderNode(childId);
+                if (childEl) el.appendChild(childEl);
+              });
+            }
+            break;
+
+          case 'Row':
+            el = document.createElement('div');
+            el.className = 'a2ui-row';
+            if (comp.justify) el.classList.add(`justify-${comp.justify}`);
+            if (comp.align) el.classList.add(`align-${comp.align}`);
+
+            if (comp.children) {
+              const childIds = Array.isArray(comp.children) ? comp.children : (comp.children.explicitList || []);
+              childIds.forEach(childId => {
+                const childEl = renderNode(childId);
+                if (childEl) el.appendChild(childEl);
+              });
+            }
+            break;
+
+          case 'Card':
+            el = document.createElement('div');
+            el.className = 'a2ui-card';
+            if (comp.child) {
+              const childEl = renderNode(comp.child);
+              if (childEl) el.appendChild(childEl);
+            }
+            break;
+
+          case 'Text':
+            const variant = comp.variant || 'body';
+            const rawVal = comp.text || '';
+            const val = enrichText(rawVal);
+            
+            if (variant === 'h1' || variant === 'heading') {
+              el = document.createElement('h1');
+              el.className = 'a2ui-text-h1';
+            } else if (variant === 'h2' || variant === 'subheading') {
+              el = document.createElement('h2');
+              el.className = 'a2ui-text-h2';
+            } else if (variant === 'h3' || variant === 'label') {
+              el = document.createElement('h3');
+              el.className = 'a2ui-text-h3';
+            } else if (variant === 'caption') {
+              el = document.createElement('span');
+              el.className = 'a2ui-text-caption';
+            } else {
+              el = document.createElement('p');
+              el.className = 'a2ui-text-body';
+            }
+            
+            el.textContent = val;
+            break;
+
+          case 'Button':
+            el = document.createElement('button');
+            el.className = 'a2ui-button';
+            el.textContent = comp.label || comp.text || 'Button';
+            
+            // Action Binding implementation
+            el.onclick = () => {
+              const action = comp.action || 'Default Action';
+              
+              if (action.startsWith('drilldown:')) {
+                const region = action.substring('drilldown:'.length);
+                const promptInput = document.getElementById('promptInput');
+                promptInput.value = `Phân tích chi tiết khu vực ${region}`;
+                triggerGeneration();
+                return;
+              }
+              
+              // Custom interactive trigger on the canvas
+              if (action.toLowerCase().includes("detail") || action.toLowerCase().includes("chi tiet")) {
+                // Highlight all cards on click!
+                document.querySelectorAll('.a2ui-card').forEach(card => {
+                  card.classList.toggle('highlight');
+                });
+                
+                document.getElementById('modalTitle').textContent = "🔍 Chi tiết Đã mở";
+                document.getElementById('modalBody').textContent = "Hệ thống đã highlight toàn bộ thẻ báo cáo dữ liệu trên Canvas!";
+              } else {
+                document.getElementById('modalTitle').textContent = "⚡ Action Triggered";
+                document.getElementById('modalBody').textContent = `Tác vụ hành động của Button A2UI: "${action}" đã được kích hoạt thành công!`;
+              }
+              document.getElementById('actionModal').style.display = 'flex';
+            };
+            break;
+
+          default:
+            console.warn(`Thành phần loại '${type}' không thuộc Basic Catalog của dự án.`);
+            el = document.createElement('div');
+            el.className = 'a2ui-text-body';
+            el.style.color = 'var(--danger)';
+            el.textContent = `[Forbidden component: ${type}]`;
+        }
+
+        return el;
+      }
+
+      const renderedCanvas = renderNode('root');
+      if (renderedCanvas) {
+        canvasRoot.appendChild(renderedCanvas);
+      }
+    }
+
+    async function triggerGeneration() {
+      const prompt = document.getElementById('promptInput').value;
+      const generateBtn = document.getElementById('generateBtn');
+      const timeline = document.getElementById('traceTimeline');
+      const jsonBlock = document.getElementById('jsonBlock');
+
+      generateBtn.disabled = true;
+      showShimmerSkeleton();
+      jsonBlock.textContent = "Chờ phản hồi từ tác nhân...";
+
+      // Setup initial Timeline state
+      timeline.innerHTML = `
+        <div class="timeline-item">
+          <div class="timeline-dot success"></div>
+          <div class="timeline-card">
+            <div class="timeline-header">
+              <span>Khởi động Graph Workflow</span>
+              <span class="timeline-node">START</span>
+            </div>
+            <div class="timeline-body">Đang phân tích prompt: "${prompt}"...</div>
+          </div>
+        </div>
+      `;
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || "Không thể gọi tác nhân để tạo canvas.");
+        }
+
+        const result = await response.json();
+        currentRawJson = result;
+
+        // Render Raw JSON Tab
+        jsonBlock.textContent = JSON.stringify(result, null, 2);
+        jsonBlock.style.color = '#34d399';
+
+        // Render timeline traces dynamically
+        const trace = result.trace || {};
+        const sqlDataCount = trace.sql_data ? JSON.parse(trace.sql_data).length : 0;
+        
+        timeline.innerHTML = `
+          <div class="timeline-item">
+            <div class="timeline-dot success"></div>
+            <div class="timeline-card">
+              <div class="timeline-header">
+                <span>Khởi động Graph Workflow</span>
+                <span class="timeline-node">START</span>
+              </div>
+              <div class="timeline-body">Đang phân tích prompt: "${prompt}"...</div>
+            </div>
+          </div>
+        `;
+        
+        if (trace.events && Array.isArray(trace.events)) {
+          trace.events.forEach(ev => {
+            if (ev.node_name && ev.node_name !== "__start__" && ev.node_name !== "__end__") {
+              let title = ev.node_name;
+              let body = ev.output || "Completed successfully.";
+              
+              if (ev.node_name === "Intent_Router") {
+                title = "Phân tích Ngữ nghĩa & Text-to-SQL";
+                body = ev.output === "next" ? "Không có yêu cầu cập nhật, tiếp tục truy xuất." : `Đã chuyển đổi: ${ev.output}`;
+              } else if (ev.node_name === "Data_Fetcher") {
+                title = "Truy xuất / Cập nhật dữ liệu SQLite";
+                body = `Thực thi qua MCP Server.\nSố bản ghi: ${sqlDataCount} hàng.`;
+              } else if (ev.node_name === "UI_Generator_Agent") {
+                title = "Sinh & Xác thực giao diện";
+                body = "Đã gửi System prompt chứa A2UI v0.9 Basic Schema.\nĐã hoàn thành sinh và kiểm định qua jsonschema thành công.";
+              } else if (ev.node_name === "Critic_Node") {
+                title = "Agentic Reflection (Tự đánh giá)";
+                body = ev.output === "valid" ? "Giao diện hợp lệ. Đã duyệt." : `Yêu cầu sửa lỗi: ${ev.output}`;
+              }
+              
+              const isError = ev.output === "error";
+              
+              timeline.innerHTML += `
+                <div class="timeline-item">
+                  <div class="timeline-dot ${isError ? 'danger' : 'success'}"></div>
+                  <div class="timeline-card">
+                    <div class="timeline-header">
+                      <span>${title}</span>
+                      <span class="timeline-node">${ev.node_name}</span>
+                    </div>
+                    <div class="timeline-body" ${isError ? 'style="color:var(--danger);"' : ''}>${body}</div>
+                  </div>
+                </div>
+              `;
+            }
+          });
+        }
+
+        // Render dynamic components
+        renderA2uiCanvas(result.ui);
+
+        // Aggregate and Render Interactive Bar Chart from result.data
+        const chartBox = document.getElementById('chartBox');
+        const chartGrid = document.getElementById('chartGrid');
+        
+        let salesData = [];
+        if (result.data) {
+          salesData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+        }
+
+        if (salesData && Array.isArray(salesData) && salesData.length > 0) {
+          // Group and sum revenue by region
+          const regionData = {};
+          salesData.forEach(row => {
+            const reg = row.region || 'Khác';
+            const rev = parseFloat(row.revenue) || 0;
+            regionData[reg] = (regionData[reg] || 0) + rev;
+          });
+
+          const regions = Object.keys(regionData);
+          const revenues = Object.values(regionData);
+          const maxRevenue = Math.max(...revenues, 1);
+
+          chartGrid.innerHTML = '';
+
+          regions.forEach((reg, idx) => {
+            const rev = regionData[reg];
+            const pct = (rev / maxRevenue) * 100;
+            
+            const barContainer = document.createElement('div');
+            barContainer.className = 'chart-bar-container';
+            
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar';
+            bar.style.height = '0%'; // Start at 0 for entrance animation
+            
+            const tooltip = document.createElement('div');
+            tooltip.className = 'chart-bar-tooltip';
+            tooltip.textContent = `$${(rev / 1000).toFixed(1)}K`;
+            bar.appendChild(tooltip);
+            
+            const label = document.createElement('div');
+            label.className = 'chart-label';
+            label.textContent = reg;
+            
+            barContainer.appendChild(bar);
+            barContainer.appendChild(label);
+            chartGrid.appendChild(barContainer);
+            
+            // Trigger animation in next rendering frames
+            setTimeout(() => {
+              bar.style.height = `${pct}%`;
+            }, 100 + idx * 100);
+          });
+
+          chartBox.style.display = 'flex';
+        } else {
+          chartBox.style.display = 'none';
+        }
+
+      } catch (err) {
+        console.error(err);
+        jsonBlock.textContent = `Lỗi thực thi:\n${err.message}`;
+        jsonBlock.style.color = '#ef4444';
+
+        timeline.innerHTML += `
+          <div class="timeline-item">
+            <div class="timeline-dot danger"></div>
+            <div class="timeline-card">
+              <div class="timeline-header">
+                <span>Lỗi Thực thi Workflow</span>
+                <span class="timeline-node">ERROR</span>
+              </div>
+              <div class="timeline-body" style="color:var(--danger);">${err.message}</div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('canvasRoot').innerHTML = `
+          <div class="empty-state" style="color: var(--danger);">
+            <span style="font-size: 3rem;">⚠️</span>
+            <h3>Lỗi Tạo Canvas</h3>
+            <p>${err.message}</p>
+          </div>
+        `;
+      } finally {
+        generateBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
