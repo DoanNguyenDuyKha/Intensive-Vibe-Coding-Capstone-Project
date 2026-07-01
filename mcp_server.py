@@ -15,7 +15,6 @@ Usage:
 """
 
 import json
-import os
 import re
 import sqlite3
 from pathlib import Path
@@ -338,11 +337,11 @@ def update_sales_data(sql_query: str) -> str:
         cursor.execute(sql_query)
         conn.commit()
         rows_affected = cursor.rowcount
-        
+
         # Also recalculate avg_deal_size for updated rows if revenue or units_sold changed
         cursor.execute("UPDATE sales SET avg_deal_size = revenue / units_sold WHERE units_sold > 0")
         conn.commit()
-        
+
         conn.close()
         return json.dumps({"status": "success", "rows_affected": rows_affected})
     except sqlite3.Error as exc:
@@ -357,9 +356,9 @@ if __name__ == "__main__":
     # Ensure database exists and is seeded before starting MCP server.
     init_database()
 
-    print(f"[START] Starting Sales Data MCP Server (stdio transport)...")
+    print("[START] Starting Sales Data MCP Server (stdio transport)...")
     print(f"   Database: {DB_PATH}")
-    print(f"   Tools:    query_sales_data, get_sales_schema")
-    print(f"   Press Ctrl+C to stop.\n")
+    print("   Tools:    query_sales_data, get_sales_schema")
+    print("   Press Ctrl+C to stop.\n")
 
     mcp.run(transport="stdio")

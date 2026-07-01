@@ -1,4 +1,3 @@
-import pytest
 import json
 from unittest.mock import MagicMock, patch
 
@@ -7,7 +6,7 @@ from a2ui.basic_catalog.constants import VERSION_0_9
 from a2ui.schema.manager import A2uiSchemaManager
 from a2ui.schema.validator import A2uiValidator
 
-from app.agent import generate_sales_ui, root_agent
+from app.agent import generate_sales_ui
 
 
 def test_generate_sales_ui_validity_success():
@@ -81,7 +80,7 @@ def test_generate_sales_ui_validity_success():
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
         mock_client.models.generate_content.side_effect = [mock_sql_response, mock_response]
-        
+
         ui_json = generate_sales_ui()
         assert mock_client.models.generate_content.call_count == 2
 
@@ -160,9 +159,9 @@ def test_generate_sales_ui_with_retry_recovery():
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
         mock_client.models.generate_content.side_effect = [mock_sql_response, mock_resp_1, mock_resp_2]
-        
+
         ui_json = generate_sales_ui()
-        
+
         # Verify it was called three times (one for SQL, two for UI generation due to retry loop)
         assert mock_client.models.generate_content.call_count == 3
 
@@ -171,5 +170,5 @@ def test_generate_sales_ui_with_retry_recovery():
         manager = A2uiSchemaManager(version=VERSION_0_9, catalogs=[config])
         catalog = manager.get_selected_catalog()
         validator = A2uiValidator(catalog)
-        
+
         validator.validate(ui_json)

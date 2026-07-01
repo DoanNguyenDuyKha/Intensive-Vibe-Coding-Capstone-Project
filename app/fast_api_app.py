@@ -14,7 +14,6 @@
 import os
 
 # System proxy settings kept.
-
 import google.auth
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -72,12 +71,14 @@ def collect_feedback(feedback: Feedback) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 from pathlib import Path
-from pydantic import BaseModel
+
+from fastapi import HTTPException
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
+from pydantic import BaseModel
+
 from app.agent import sales_canvas_workflow
-from fastapi import HTTPException
 
 
 class PromptRequest(BaseModel):
@@ -85,6 +86,7 @@ class PromptRequest(BaseModel):
 
 
 import sqlite3
+
 
 class SalesRecordUpdate(BaseModel):
     revenue: float
@@ -98,7 +100,7 @@ def get_sales_records():
     db_path = Path(AGENT_DIR) / "data" / "sales.db"
     if not db_path.exists():
         db_path = Path(os.getcwd()) / "data" / "sales.db"
-        
+
     try:
         conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
@@ -109,7 +111,7 @@ def get_sales_records():
         conn.close()
         return records
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
 
 
 @app.put("/api/sales/{record_id}")
@@ -118,7 +120,7 @@ def update_sales_record(record_id: int, record: SalesRecordUpdate):
     db_path = Path(AGENT_DIR) / "data" / "sales.db"
     if not db_path.exists():
         db_path = Path(os.getcwd()) / "data" / "sales.db"
-        
+
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -133,14 +135,14 @@ def update_sales_record(record_id: int, record: SalesRecordUpdate):
         conn.commit()
         updated = cursor.rowcount > 0
         conn.close()
-        
+
         if not updated:
             raise HTTPException(status_code=404, detail="Record not found")
         return {"status": "success", "message": f"Record {record_id} updated."}
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
 
 
 @app.get("/canvas")
@@ -164,44 +166,44 @@ def generate_canvas(request: PromptRequest):
         session_service = InMemorySessionService()
         session = session_service.create_session_sync(user_id=unique_id, app_name="canvas")
         runner = Runner(agent=sales_canvas_workflow, session_service=session_service, app_name="canvas")
-        
+
         user_message = types.Content(
             role="user",
             parts=[types.Part.from_text(text=request.prompt)]
         )
-        
+
         events = list(runner.run(
             user_id=unique_id,
             session_id=session.id,
             new_message=user_message
         ))
-        
+
         # Compile structured trace events for frontend visualization
         trace_events = []
         for ev in events:
             ev_type = type(ev).__name__
             node_name = getattr(ev, "node_name", None)
             output_val = getattr(ev, "output", None)
-            
+
             trace_events.append({
                 "type": ev_type,
                 "node_name": node_name,
                 "output": str(output_val)[:1000] if output_val else None
             })
-            
+
         final_output = session.state.get("final_output")
         raw_data = session.state.get("sales_data_raw")
-        
+
         if not final_output:
             for ev in events:
                 output_val = getattr(ev, "output", None)
                 if output_val and isinstance(output_val, dict) and "ui" in output_val:
                     final_output = output_val
                     break
-                    
+
         if not final_output:
             raise ValueError("Workflow executed successfully but did not produce a valid Hybrid Output.")
-            
+
         return {
             "data": final_output.get("data"),
             "ui": final_output.get("ui"),
@@ -210,7 +212,7 @@ def generate_canvas(request: PromptRequest):
                 "events": trace_events
             }
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
