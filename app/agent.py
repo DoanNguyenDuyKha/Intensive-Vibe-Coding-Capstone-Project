@@ -120,6 +120,25 @@ class SalesDashboardState(BaseModel):
 def clean_json_string(s: str) -> str:
     """Removes markdown code block delimiters and whitespaces from the LLM output."""
     s = s.strip()
+    
+    # Try parsing directly first
+    try:
+        json.loads(s)
+        return s
+    except json.JSONDecodeError:
+        pass
+        
+    # Search for first '{' and last '}' to extract raw JSON
+    first_brace = s.find('{')
+    last_brace = s.rfind('}')
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        extracted = s[first_brace:last_brace+1]
+        try:
+            json.loads(extracted)
+            return extracted
+        except json.JSONDecodeError:
+            pass
+
     if s.startswith("```json"):
         s = s[7:]
     elif s.startswith("```"):
@@ -230,8 +249,12 @@ def data_fetcher_node(ctx: Context) -> str:
     init_database()
     
     prompt = ctx.state.get("user_prompt", "")
+    update_msg = ctx.state.get("update_message")
         
-    if prompt:
+    if update_msg:
+        # If an update was executed, fetch all sales records to show the updated dashboard
+        query = "SELECT region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep FROM sales;"
+    elif prompt:
         from google import genai
         client = genai.Client()
         sys_prompt = "You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep). Generate a valid SQL SELECT statement to answer the user's request. Return ONLY the raw SQL query, no markdown, no explanation."
