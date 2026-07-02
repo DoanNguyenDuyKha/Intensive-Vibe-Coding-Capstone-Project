@@ -857,6 +857,71 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* ============ RESPONSIVE LAYOUTS ============ */
+    @media (max-width: 1280px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+      }
+      .left-sidebar, .right-sidebar {
+        width: 100%;
+        border-right: none;
+        border-left: none;
+        flex-shrink: 1;
+        min-height: auto;
+        overflow-y: visible;
+      }
+      .left-sidebar {
+        border-bottom: 1px solid var(--border-card);
+      }
+      .right-sidebar {
+        border-top: 1px solid var(--border-card);
+        height: 600px;
+        overflow-y: auto;
+      }
+      .workspace {
+        width: 100%;
+        height: auto;
+        overflow-y: visible;
+      }
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+      }
+      .status-container {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        width: 100%;
+      }
+      .status-container .btn, .status-container .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.6rem;
+      }
+      .brand-title {
+        font-size: 1.15rem;
+      }
+      .left-sidebar, .workspace, .right-sidebar {
+        padding: 1rem;
+      }
+      .a2ui-row {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .a2ui-card {
+        min-width: 100%;
+      }
+      .donut-center-wrapper {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+    }
+
     @media print {
       body { background: white !important; color: black !important; height: auto !important; overflow: visible !important; }
       header, .left-sidebar, .right-sidebar, .btn, #themeToggleBtn, .badge, .tabs-header, #exportPdfBtn { display: none !important; }
