@@ -853,8 +853,13 @@
     }
 
     @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(15px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    .a2ui-animate {
+      opacity: 0;
+      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     /* ============ RESPONSIVE LAYOUTS ============ */
@@ -1355,6 +1360,7 @@
 
       const components = uiPayload.updateComponents.components;
       const componentMap = {};
+      let animCount = 0;
 
       components.forEach(comp => {
         if (comp.id) {
@@ -1617,6 +1623,12 @@
             el.className = 'a2ui-text-body';
             el.style.color = 'var(--danger)';
             el.textContent = `[Forbidden component: ${type}]`;
+        }
+
+        if (el && compId !== 'root') {
+          el.classList.add('a2ui-animate');
+          el.style.animationDelay = `${animCount * 0.05}s`;
+          animCount++;
         }
 
         return el;
