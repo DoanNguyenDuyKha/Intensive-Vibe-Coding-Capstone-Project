@@ -78,7 +78,7 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 from pydantic import BaseModel
 
-from app.agent import sales_canvas_workflow
+from app.agent import sales_canvas_workflow, generate_content_with_retry
 
 
 from typing import Optional
@@ -157,6 +157,31 @@ def read_canvas():
         if not index_path.exists():
             index_path = Path(os.getcwd()) / "canvas_dashboard" / "index.html"
     return FileResponse(str(index_path))
+
+
+class TranslateRequest(BaseModel):
+    text: str
+    target_lang: str
+
+
+@app.post("/api/translate")
+def translate_text(request: TranslateRequest):
+    """Translate arbitrary layout/summary text dynamically between English and Vietnamese using Gemini."""
+    try:
+        from google import genai
+        client = genai.Client()
+        
+        target = "Vietnamese" if request.target_lang == "vi" else "English"
+        sys_prompt = f"You are a professional business metrics and dashboard translator. Translate the given text into natural, professional {target} for a corporate sales report dashboard. Return ONLY the translated text without any preamble, explanation, or quotes."
+        
+        resp = generate_content_with_retry(
+            client=client,
+            model="gemini-2.5-flash",
+            contents=f"{sys_prompt}\n\nText: {request.text}"
+        )
+        return {"translated_text": resp.text.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/generate")

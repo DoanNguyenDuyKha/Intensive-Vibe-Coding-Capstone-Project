@@ -1278,7 +1278,53 @@
       return result;
     }
 
-    function toggleLanguage() {
+    async function translateTextAsync(text, targetLang) {
+      if (!text || typeof text !== 'string' || text.trim() === '') return text;
+      
+      const lower = text.trim().toLowerCase();
+      const dict = {
+        "executive summary": targetLang === 'vi' ? "Tóm tắt Báo cáo" : "Executive Summary",
+        "total revenue": targetLang === 'vi' ? "Tổng Doanh Thu" : "Total Revenue",
+        "total units sold": targetLang === 'vi' ? "Tổng Số Lượng Bán" : "Total Units Sold",
+        "avg deal size": targetLang === 'vi' ? "Giá Trị Đơn Hàng TB" : "Avg Deal Size",
+        "region": targetLang === 'vi' ? "Khu vực" : "Region",
+        "quarter": targetLang === 'vi' ? "Quý" : "Quarter",
+        "month": targetLang === 'vi' ? "Tháng" : "Month",
+        "product category": targetLang === 'vi' ? "Danh mục" : "Product Category",
+        "sales representative": targetLang === 'vi' ? "Nhân viên Bán hàng" : "Sales Representative",
+        "revenue": targetLang === 'vi' ? "Doanh thu" : "Revenue",
+        "details": targetLang === 'vi' ? "Chi tiết" : "Details",
+        "drill down": targetLang === 'vi' ? "Xem chi tiết" : "Drill Down",
+        "drilldown": targetLang === 'vi' ? "Xem chi tiết" : "Drill Down",
+        "detailed analysis": targetLang === 'vi' ? "Phân tích chi tiết" : "Detailed analysis",
+        "comparative analysis": targetLang === 'vi' ? "Biểu đồ So sánh" : "Comparative Analysis",
+        "trend analysis": targetLang === 'vi' ? "Biểu đồ Xu hướng" : "Trend Analysis",
+        "distribution analysis": targetLang === 'vi' ? "Biểu đồ Phân bổ" : "Distribution Analysis",
+        "top sales representative": targetLang === 'vi' ? "Nhân viên Bán hàng Xuất sắc nhất" : "Top Sales Representative",
+        "sales performance summary": targetLang === 'vi' ? "Tóm tắt Hiệu suất Bán hàng" : "Sales Performance Summary",
+        "sales dashboard": targetLang === 'vi' ? "Bảng Điều khiển Doanh số" : "Sales Dashboard"
+      };
+      
+      if (dict[lower]) {
+        return dict[lower];
+      }
+      
+      try {
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, target_lang: targetLang })
+        });
+        if (!response.ok) throw new Error("Translation API failed");
+        const data = await response.json();
+        return data.translated_text || text;
+      } catch (err) {
+        console.warn("Translation failed, falling back to local translateText:", err);
+        return translateText(text, targetLang);
+      }
+    }
+
+    async function toggleLanguage() {
       currentLang = currentLang === 'en' ? 'vi' : 'en';
       localStorage.setItem('lang', currentLang);
       updatePageLanguage();
@@ -1297,6 +1343,7 @@
 
       // Live update of existing rendered canvas & chart if present
       if (currentRawJson) {
+        // Step 1: Render client-side translations immediately for zero latency
         const uiCopy = JSON.parse(JSON.stringify(currentRawJson.ui));
         if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
           uiCopy.updateComponents.components.forEach(comp => {
@@ -1307,6 +1354,24 @@
           renderA2uiCanvas(uiCopy);
         }
         renderSalesChart(currentRawJson);
+
+        // Step 2: Asynchronously fetch high-quality AI translations for complex paragraph descriptions
+        if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
+          const translationPromises = uiCopy.updateComponents.components.map(async (comp) => {
+            if (comp.text && comp.text.length > 20) {
+              comp.text = await translateTextAsync(comp.text, currentLang);
+            }
+            if (comp.label && comp.label.length > 20) {
+              comp.label = await translateTextAsync(comp.label, currentLang);
+            }
+            if (comp.title && comp.title.length > 20) {
+              comp.title = await translateTextAsync(comp.title, currentLang);
+            }
+          });
+          
+          await Promise.all(translationPromises);
+          renderA2uiCanvas(uiCopy);
+        }
       }
     }
 
