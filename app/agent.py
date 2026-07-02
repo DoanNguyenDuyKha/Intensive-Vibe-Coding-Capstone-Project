@@ -197,6 +197,26 @@ def validate_hybrid_output(output_str: str, validator: A2uiValidator, raw_data_f
     return data
 
 
+def generate_content_with_retry(client, model, contents, config=None, max_attempts=3, delay=3.0):
+    import time
+    last_error = None
+    for attempt in range(max_attempts):
+        try:
+            if config:
+                return client.models.generate_content(model=model, contents=contents, config=config)
+            else:
+                return client.models.generate_content(model=model, contents=contents)
+        except Exception as e:
+            last_error = e
+            is_transient = any(term in str(e).upper() for term in ["503", "429", "UNAVAILABLE", "EXHAUSTED"])
+            if is_transient and attempt < max_attempts - 1:
+                time.sleep(delay)
+            else:
+                raise e
+    if last_error:
+        raise last_error
+
+
 # ---------------------------------------------------------------------------
 # Workflow Nodes
 # ---------------------------------------------------------------------------
@@ -237,7 +257,8 @@ def intent_router_node(ctx: Context) -> str:
         client = genai.Client()
         # Translate to SQL
         sys_prompt = "You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep). Return ONLY a valid SQL UPDATE statement based on the user request. No markdown, no explanation."
-        resp = client.models.generate_content(
+        resp = generate_content_with_retry(
+            client=client,
             model="gemini-2.5-flash",
             contents=f"{sys_prompt}\n\nUser request: {prompt}"
         )
@@ -285,7 +306,8 @@ def data_fetcher_node(ctx: Context) -> str:
         from google import genai
         client = genai.Client()
         sys_prompt = "You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep). Generate a valid SQL SELECT statement to answer the user's request. Return ONLY the raw SQL query, no markdown, no explanation."
-        resp = client.models.generate_content(
+        resp = generate_content_with_retry(
+            client=client,
             model="gemini-2.5-flash",
             contents=f"{sys_prompt}\n\nUser request: {prompt}"
         )
@@ -422,7 +444,8 @@ def ui_generator_node(ctx: Context) -> dict:
     
     for attempt in range(attempts):
         try:
-            response = client.models.generate_content(
+            response = generate_content_with_retry(
+                client=client,
                 model=model_name,
                 contents=current_prompt,
                 config=types.GenerateContentConfig(
