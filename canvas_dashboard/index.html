@@ -967,9 +967,17 @@
       <button class="btn" id="themeToggleBtn" style="padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 20px; box-shadow: none; border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="toggleTheme()">
         🌙 Dark Mode
       </button>
-      <button class="btn" id="langToggleBtn" style="padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 20px; box-shadow: none; border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="toggleLanguage()">
-        🇻🇳 Tiếng Việt
-      </button>
+      <select id="langSelect" class="nav-btn-select" onchange="changeLanguage(this.value)" style="padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 20px; box-shadow: none; border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s ease; outline: none;">
+        <option value="en">🇺🇸 English</option>
+        <option value="vi">🇻🇳 Tiếng Việt</option>
+        <option value="ja">🇯🇵 日本語 (Japanese)</option>
+        <option value="ko">🇰🇷 한국어 (Korean)</option>
+        <option value="zh">🇨🇳 中文 (Chinese)</option>
+        <option value="fr">🇫🇷 Français (French)</option>
+        <option value="es">🇪🇸 Español (Spanish)</option>
+        <option value="de">🇩🇪 Deutsch (German)</option>
+        <option value="th">🇹🇭 ไทย (Thai)</option>
+      </select>
       <span class="badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #34d399;">
         ● SQLite MCP Connected
       </span>
@@ -1117,42 +1125,34 @@
 
     let currentLang = localStorage.getItem('lang') || 'en';
 
-    function updatePageLanguage() {
-      const langBtn = document.getElementById('langToggleBtn');
+    async function updatePageLanguage() {
+      const brandTitle = document.querySelector('.brand-title');
+      const sectionTitles = document.querySelectorAll('.section-title');
+      const dbTitle = document.querySelector('.db-editor-box .section-title');
+      const dbDesc = document.querySelector('.db-editor-box p');
+      const promptInput = document.getElementById('promptInput');
+      const generateBtn = document.getElementById('generateBtn');
+      const exportBtn = document.getElementById('exportPdfBtn');
+      const sampleBtns = document.querySelectorAll('.left-sidebar ul button');
+      const headers = document.querySelectorAll('#dbTable th');
+      const tabs = document.querySelectorAll('.tab-btn');
+
       if (currentLang === 'vi') {
-        if (langBtn) langBtn.innerHTML = '🇺🇸 English';
-        const brandTitle = document.querySelector('.brand-title');
         if (brandTitle) brandTitle.textContent = 'Bảng vẽ Dữ liệu A2UI';
-        
-        const sectionTitles = document.querySelectorAll('.section-title');
         if (sectionTitles.length >= 2) {
           sectionTitles[0].textContent = 'Yêu cầu Prompt';
           sectionTitles[1].textContent = 'Câu hỏi Mẫu';
         }
-        
-        const dbTitle = document.querySelector('.db-editor-box .section-title');
         if (dbTitle) dbTitle.textContent = 'Trình sửa Dữ liệu SQLite';
-        
-        const dbDesc = document.querySelector('.db-editor-box p');
         if (dbDesc) dbDesc.innerHTML = 'Sửa giá trị trực tiếp trong các ô (tự động lưu). Sau đó bấm <strong>Tạo Giao diện</strong> để cập nhật.';
-        
-        const promptInput = document.getElementById('promptInput');
         if (promptInput) promptInput.placeholder = 'Nhập câu lệnh phát sinh giao diện...';
-        
-        const generateBtn = document.getElementById('generateBtn');
         if (generateBtn) generateBtn.innerHTML = '<span>🎨 Tạo Giao diện</span>';
-        
-        const exportBtn = document.getElementById('exportPdfBtn');
         if (exportBtn) exportBtn.innerHTML = '📄 Xuất Báo cáo';
-        
-        const sampleBtns = document.querySelectorAll('.left-sidebar ul button');
         if (sampleBtns.length >= 3) {
           sampleBtns[0].textContent = '👉 So sánh vùng North & South Q4';
           sampleBtns[1].textContent = '👉 Tổng Doanh thu theo Danh mục';
           sampleBtns[2].textContent = '👉 Nhân viên Bán hàng Xuất sắc nhất';
         }
-        
-        const headers = document.querySelectorAll('#dbTable th');
         if (headers.length >= 5) {
           headers[0].textContent = 'Khu vực';
           headers[1].textContent = 'Quý';
@@ -1160,46 +1160,26 @@
           headers[3].textContent = 'Doanh thu ($)';
           headers[4].textContent = 'Đã bán';
         }
-        
-        const tabs = document.querySelectorAll('.tab-btn');
         if (tabs.length >= 2) {
           tabs[0].textContent = '🧠 Dấu vết Tác nhân';
           tabs[1].textContent = '📋 JSON Đầu ra';
         }
-      } else {
-        if (langBtn) langBtn.innerHTML = '🇻🇳 Tiếng Việt';
-        const brandTitle = document.querySelector('.brand-title');
+      } else if (currentLang === 'en') {
         if (brandTitle) brandTitle.textContent = 'A2UI Data Canvas Studio';
-        
-        const sectionTitles = document.querySelectorAll('.section-title');
         if (sectionTitles.length >= 2) {
           sectionTitles[0].textContent = 'Prompt Request';
           sectionTitles[1].textContent = 'Sample Queries';
         }
-        
-        const dbTitle = document.querySelector('.db-editor-box .section-title');
         if (dbTitle) dbTitle.textContent = 'SQLite Live Data Editor';
-        
-        const dbDesc = document.querySelector('.db-editor-box p');
         if (dbDesc) dbDesc.innerHTML = 'Edit values directly in the cells (auto-saves). Then click <strong>Generate Canvas</strong> to update the UI.';
-        
-        const promptInput = document.getElementById('promptInput');
         if (promptInput) promptInput.placeholder = 'Enter layout generation query...';
-        
-        const generateBtn = document.getElementById('generateBtn');
         if (generateBtn) generateBtn.innerHTML = '<span>🎨 Generate Canvas</span>';
-        
-        const exportBtn = document.getElementById('exportPdfBtn');
         if (exportBtn) exportBtn.innerHTML = '📄 Export Report';
-        
-        const sampleBtns = document.querySelectorAll('.left-sidebar ul button');
         if (sampleBtns.length >= 3) {
           sampleBtns[0].textContent = '👉 Compare North & South Q4';
           sampleBtns[1].textContent = '👉 Total Revenue by Category';
           sampleBtns[2].textContent = '👉 Top Sales Representative';
         }
-
-        const headers = document.querySelectorAll('#dbTable th');
         if (headers.length >= 5) {
           headers[0].textContent = 'Region';
           headers[1].textContent = 'Quarter';
@@ -1207,11 +1187,82 @@
           headers[3].textContent = 'Revenue ($)';
           headers[4].textContent = 'Sold';
         }
-        
-        const tabs = document.querySelectorAll('.tab-btn');
         if (tabs.length >= 2) {
           tabs[0].textContent = '🧠 Agentic Trace';
           tabs[1].textContent = '📋 Hybrid Output JSON';
+        }
+      } else {
+        // Fallback for other world languages: translate dynamically using Gemini API!
+        if (brandTitle) brandTitle.textContent = await translateTextAsync('A2UI Data Canvas Studio', currentLang);
+        if (sectionTitles.length >= 2) {
+          sectionTitles[0].textContent = await translateTextAsync('Prompt Request', currentLang);
+          sectionTitles[1].textContent = await translateTextAsync('Sample Queries', currentLang);
+        }
+        if (dbTitle) dbTitle.textContent = await translateTextAsync('SQLite Live Data Editor', currentLang);
+        if (dbDesc) {
+          const raw = 'Edit values directly in the cells (auto-saves). Then click <strong>Generate Canvas</strong> to update the UI.';
+          dbDesc.innerHTML = await translateTextAsync(raw, currentLang);
+        }
+        if (promptInput) promptInput.placeholder = await translateTextAsync('Enter layout generation query...', currentLang);
+        if (generateBtn) generateBtn.innerHTML = `<span>🎨 ${await translateTextAsync('Generate Canvas', currentLang)}</span>`;
+        if (exportBtn) exportBtn.innerHTML = `📄 ${await translateTextAsync('Export Report', currentLang)}`;
+        if (sampleBtns.length >= 3) {
+          sampleBtns[0].textContent = '👉 ' + await translateTextAsync('Compare North & South Q4', currentLang);
+          sampleBtns[1].textContent = '👉 ' + await translateTextAsync('Total Revenue by Category', currentLang);
+          sampleBtns[2].textContent = '👉 ' + await translateTextAsync('Top Sales Representative', currentLang);
+        }
+        if (headers.length >= 5) {
+          headers[0].textContent = await translateTextAsync('Region', currentLang);
+          headers[1].textContent = await translateTextAsync('Quarter', currentLang);
+          headers[2].textContent = await translateTextAsync('Category', currentLang);
+          headers[3].textContent = await translateTextAsync('Revenue ($)', currentLang);
+          headers[4].textContent = await translateTextAsync('Sold', currentLang);
+        }
+        if (tabs.length >= 2) {
+          tabs[0].textContent = '🧠 ' + await translateTextAsync('Agentic Trace', currentLang);
+          tabs[1].textContent = '📋 ' + await translateTextAsync('Hybrid Output JSON', currentLang);
+        }
+      }
+    }
+
+    async function changeLanguage(newLang) {
+      currentLang = newLang;
+      localStorage.setItem('lang', currentLang);
+      
+      const select = document.getElementById('langSelect');
+      if (select) select.value = currentLang;
+
+      await updatePageLanguage();
+
+      const promptInput = document.getElementById('promptInput');
+      if (promptInput) {
+        const val = promptInput.value.trim();
+        if (val) {
+          promptInput.value = await translateTextAsync(val, currentLang);
+        }
+      }
+
+      if (currentRawJson) {
+        const uiCopy = JSON.parse(JSON.stringify(currentRawJson.ui));
+        if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
+          uiCopy.updateComponents.components.forEach(comp => {
+            if (comp.text) comp.text = translateText(comp.text, currentLang);
+            if (comp.label) comp.label = translateText(comp.label, currentLang);
+            if (comp.title) comp.title = translateText(comp.title, currentLang);
+          });
+          renderA2uiCanvas(uiCopy);
+        }
+        renderSalesChart(currentRawJson);
+
+        if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
+          const translationPromises = uiCopy.updateComponents.components.map(async (comp) => {
+            if (comp.text) comp.text = await translateFieldAsync(comp.text, currentLang);
+            if (comp.label) comp.label = await translateFieldAsync(comp.label, currentLang);
+            if (comp.title) comp.title = await translateFieldAsync(comp.title, currentLang);
+          });
+          
+          await Promise.all(translationPromises);
+          renderA2uiCanvas(uiCopy);
         }
       }
     }
@@ -1438,6 +1489,8 @@
     // Load SQLite database data on startup
     window.onload = function() {
       loadDbData();
+      const select = document.getElementById('langSelect');
+      if (select) select.value = currentLang;
       updatePageLanguage();
       // Initialize theme toggle button text
       const savedTheme = localStorage.getItem('theme') || 'light';

@@ -402,30 +402,25 @@ def ui_generator_node(ctx: Context) -> dict:
     update_info = f'\n    SYSTEM ACTION STATUS: "{update_msg}"\n    (Please display a clean success notification card or label at the top of the dashboard layout to show the user that their data update was executed successfully.)\n' if update_msg else ""
 
     language = ctx.state.get("language", "en") if isinstance(ctx.state, dict) else getattr(ctx.state, "language", "en")
-    lang_info = ""
-    if language == "vi":
-        lang_info = """
-        LANGUAGE REQUIREMENT:
-        You MUST generate all UI text, header titles, card labels, descriptions, and executive summaries in VIETNAMESE.
-        For example:
-        - "Q3 & Q4 Sales Dashboard" -> "Báo Cáo Doanh Thu Q3 & Q4" or "Bảng Điều Khiển Doanh Số Q3 & Q4"
-        - "Executive Summary" -> "Tóm Tắt Báo Cáo"
-        - "Total Revenue" -> "Tổng Doanh Thu"
-        - "Total Units Sold" -> "Tổng Số Lượng Bán"
-        - "Avg Deal Size" -> "Giá Trị Đơn Hàng TB"
-        - "Sales Representative" -> "Nhân Viên Kinh Doanh"
-        - "Region" -> "Vùng Miền"
-        - "Quarter" -> "Quý"
-        - "Month" -> "Tháng"
-        - "Product Category" -> "Danh Mục Sản Phẩm"
-        
-        Keep all numbers, currency signs ($ or USD), and raw data fields (like Nguyen Van A, South, etc.) original. Just translate the UI descriptive text, headers, and summaries.
-        """
-    else:
-        lang_info = """
-        LANGUAGE REQUIREMENT:
-        You MUST generate all UI text, titles, labels, and summaries in ENGLISH.
-        """
+    
+    lang_map = {
+        "en": "ENGLISH",
+        "vi": "VIETNAMESE",
+        "ja": "JAPANESE",
+        "ko": "KOREAN",
+        "zh": "CHINESE",
+        "fr": "FRENCH",
+        "es": "SPANISH",
+        "de": "GERMAN",
+        "th": "THAI"
+    }
+    lang_name = lang_map.get(language, "ENGLISH")
+    
+    lang_info = f"""
+    LANGUAGE REQUIREMENT:
+    You MUST generate all UI text, titles, labels, descriptions, and summaries in {lang_name}.
+    Keep all numbers, currency signs ($ or USD), and raw data fields (like representative names, category names) original. Just translate the UI descriptive text, headers, and summaries.
+    """
 
     prompt = f"""
     {instructions}
