@@ -207,9 +207,16 @@ def generate_canvas(request: PromptRequest):
         if not final_output:
             raise ValueError("Workflow executed successfully but did not produce a valid Hybrid Output.")
 
+        # If raw_data is None but final_output has data, use that as fallback
+        response_data = final_output.get("data")
+        if not raw_data and response_data:
+            import json as _json
+            raw_data = _json.dumps(response_data) if not isinstance(response_data, str) else response_data
+
         return {
-            "data": final_output.get("data"),
+            "data": response_data,
             "ui": final_output.get("ui"),
+            "chart_type": final_output.get("chart_type", "bar"),
             "trace": {
                 "sql_data": raw_data,
                 "events": trace_events

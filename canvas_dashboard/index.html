@@ -1389,14 +1389,31 @@
 
         // Render timeline traces dynamically
         const trace = result.trace || {};
+        
+        // Compute row count from MULTIPLE sources for robustness
         let sqlDataCount = 0;
+        // Primary: use result.data (the actual returned data)
         try {
-          if (trace.sql_data) {
-            const parsedSql = JSON.parse(trace.sql_data);
-            sqlDataCount = parsedSql.row_count !== undefined ? parsedSql.row_count : (parsedSql.data ? parsedSql.data.length : parsedSql.length || 0);
+          let mainData = result.data;
+          if (typeof mainData === 'string') mainData = JSON.parse(mainData);
+          if (Array.isArray(mainData)) {
+            sqlDataCount = mainData.length;
+          } else if (mainData && typeof mainData === 'object') {
+            // Could be { data: [...], row_count: N } or { columns: [...], row_count: N, data: [...] }
+            if (mainData.row_count !== undefined) sqlDataCount = mainData.row_count;
+            else if (mainData.data && Array.isArray(mainData.data)) sqlDataCount = mainData.data.length;
           }
-        } catch (e) {
-          console.error("Error parsing sql_data trace:", e);
+        } catch (e) { console.warn("Could not parse result.data for row count:", e); }
+        
+        // Fallback: try trace.sql_data if result.data didn't give us a count
+        if (sqlDataCount === 0) {
+          try {
+            if (trace.sql_data) {
+              let parsedSql = typeof trace.sql_data === 'string' ? JSON.parse(trace.sql_data) : trace.sql_data;
+              if (parsedSql.row_count !== undefined) sqlDataCount = parsedSql.row_count;
+              else if (parsedSql.data && Array.isArray(parsedSql.data)) sqlDataCount = parsedSql.data.length;
+            }
+          } catch (e) { console.warn("Could not parse trace.sql_data for row count:", e); }
         }
         
         timeline.innerHTML = `
@@ -1459,29 +1476,71 @@
         
         let salesData = [];
         if (result.data) {
-          salesData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+          let parsed = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+          // Handle nested format: {columns: [...], row_count: N, data: [...]}
+          if (parsed && !Array.isArray(parsed) && parsed.data && Array.isArray(parsed.data)) {
+            salesData = parsed.data;
+          } else if (Array.isArray(parsed)) {
+            salesData = parsed;
+          }
         }
 
         if (salesData && Array.isArray(salesData) && salesData.length > 0) {
-          // Dynamically detect the best grouping column
-          let groupKey = 'region';
+          // Dynamically detect the best grouping column (categorical/text column)
+          let groupKey = null;
           const sampleRow = salesData[0];
           const keys = Object.keys(sampleRow);
-          const priorities = ['sales_rep', 'product_category', 'category', 'region', 'month', 'quarter'];
-          for (const p of priorities) {
+          // Pick the first text/categorical column as grouping key
+          const groupPriorities = ['sales_rep', 'product_category', 'category', 'region', 'month', 'quarter'];
+          for (const p of groupPriorities) {
             if (keys.includes(p)) {
               groupKey = p;
               break;
             }
           }
+          // If no known grouping column, use the first non-numeric column
+          if (!groupKey) {
+            for (const k of keys) {
+              if (typeof sampleRow[k] === 'string') {
+                groupKey = k;
+                break;
+              }
+            }
+          }
+          if (!groupKey) groupKey = keys[0]; // last resort
 
-          // Aggregate revenue or units
+          // Dynamically detect the best value column (numeric column)
+          const valuePriorities = ['revenue', 'total_revenue', 'total', 'SUM(revenue)', 'units_sold', 'total_units_sold', 'total_units_q3', 'total_units_q4', 'avg_deal_size', 'count'];
+          let valueKey = null;
+          for (const vp of valuePriorities) {
+            if (keys.includes(vp)) {
+              valueKey = vp;
+              break;
+            }
+          }
+          // If no known value column, use first numeric column that's not the group key
+          if (!valueKey) {
+            for (const k of keys) {
+              if (k !== groupKey && typeof sampleRow[k] === 'number') {
+                valueKey = k;
+                break;
+              }
+            }
+          }
+
+          // Aggregate data by group key
           const chartData = {};
-          const isUnits = !keys.includes('revenue') && !keys.includes('total_revenue') && keys.includes('units_sold');
+          const isUnits = valueKey && (valueKey.includes('units') || valueKey.includes('count'));
           
           salesData.forEach(row => {
             const keyVal = row[groupKey] || 'Other';
-            const val = parseFloat(row.revenue) || parseFloat(row.total_revenue) || parseFloat(row.total) || parseFloat(row.units_sold) || parseFloat(row.avg_deal_size) || 0;
+            // Use dynamically detected valueKey, with fallback to known columns
+            let val = 0;
+            if (valueKey && row[valueKey] !== undefined) {
+              val = parseFloat(row[valueKey]) || 0;
+            } else {
+              val = parseFloat(row.revenue) || parseFloat(row.total_revenue) || parseFloat(row.total) || parseFloat(row.units_sold) || parseFloat(row.avg_deal_size) || 0;
+            }
             chartData[keyVal] = (chartData[keyVal] || 0) + val;
           });
 
@@ -1490,12 +1549,19 @@
           const totalValue = values.reduce((a, b) => a + b, 0);
           const maxValue = Math.max(...values, 1);
 
-          // Value formatter
+          // Value formatter with intelligent detection
+          const isCurrency = valueKey && (valueKey.toLowerCase().includes('revenue') || valueKey.toLowerCase().includes('total') || valueKey.toLowerCase().includes('sum'));
           function formatVal(val) {
             if (isUnits) {
-              return `${val.toLocaleString()} units`;
+              return val >= 1000 ? `${(val / 1000).toFixed(1)}K units` : `${val.toLocaleString()} units`;
+            } else if (isCurrency) {
+              if (val >= 1000000) return `$${(val / 1000000).toFixed(2)}M`;
+              if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
+              return `$${val.toLocaleString()}`;
             } else {
-              return `$${(val / 1000).toFixed(1)}K`;
+              if (val >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
+              if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
+              return val.toLocaleString();
             }
           }
 
