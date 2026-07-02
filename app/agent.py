@@ -337,6 +337,7 @@ def ui_generator_node(ctx: Context) -> dict:
            ]
          }}
        }}
+    3. "chart_type": (Optional string) Choose the best chart type to visualize this query: "bar" (default for region/category comparative lists), "line" (ideal for quarter-over-quarter timeline trends), or "pie" (ideal for showing product category share distribution).
        
        Rules:
        - Use ONLY the following Basic Catalog components: Column, Row, Text, Button, Card.
@@ -345,6 +346,8 @@ def ui_generator_node(ctx: Context) -> dict:
        - Render labels and values using Text components.
        - The root of the components list must have id "root".
        - All referenced component IDs in "children" list must exist.
+       - You MUST always include an Executive Summary Card (id="exec-summary") at the top of the children list containing narrative insights and trends calculated from the data.
+       - For regional sales cards, you should add a Button (e.g. id="drill-north") with action set to "drilldown:<RegionName>" (e.g. "drilldown:North") to enable interactive drilldown analysis.
     """
 
     from google import genai

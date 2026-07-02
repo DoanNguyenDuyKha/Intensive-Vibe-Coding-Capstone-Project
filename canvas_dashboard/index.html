@@ -719,6 +719,53 @@
     .align-end { align-items: flex-end; }
     .align-stretch { align-items: stretch; }
     .align-baseline { align-items: baseline; }
+
+    /* Donut and Line SVG styles */
+    .chart-svg {
+      max-width: 100%;
+      height: 220px;
+    }
+    
+    .donut-segment {
+      transform-origin: center;
+      transition: stroke-width 0.2s ease, filter 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .donut-segment:hover {
+      stroke-width: 7 !important;
+      filter: brightness(1.2);
+    }
+    
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      color: var(--text-main);
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    @media print {
+      body { background: white !important; color: black !important; height: auto !important; overflow: visible !important; }
+      header, .left-sidebar, .right-sidebar, .btn, #themeToggleBtn, .badge, .tabs-header, #exportPdfBtn { display: none !important; }
+      .container { height: auto !important; overflow: visible !important; display: block !important; }
+      .workspace { padding: 0 !important; background: none !important; overflow: visible !important; width: 100% !important; }
+      .chart-box, .a2ui-card { page-break-inside: avoid !important; box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+    }
   </style>
 </head>
 <body>
@@ -809,6 +856,11 @@
 
     <!-- Center Panel: The live rendering canvas -->
     <div class="workspace" id="canvasPanel">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem; flex-shrink: 0;">
+        <button id="exportPdfBtn" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 6px; box-shadow: none; border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); cursor: pointer; transition: all 0.2s ease;" onclick="window.print()">
+          📄 Export Report
+        </button>
+      </div>
       <div id="canvasRoot" style="width: 100%; min-height: 100%; display: flex; flex-direction: column;">
         <div class="empty-state">
           <span class="empty-icon">🎨</span>
@@ -1268,7 +1320,7 @@
         // Render dynamic components
         renderA2uiCanvas(result.ui);
 
-        // Aggregate and Render Interactive Bar Chart from result.data
+        // Aggregate and Render Interactive Chart from result.data
         const chartBox = document.getElementById('chartBox');
         const chartGrid = document.getElementById('chartGrid');
         
@@ -1278,7 +1330,7 @@
         }
 
         if (salesData && Array.isArray(salesData) && salesData.length > 0) {
-          // Group and sum revenue by region
+          // Group and sum revenue by region or category depending on search context
           const regionData = {};
           salesData.forEach(row => {
             const reg = row.region || 'Other';
@@ -1288,41 +1340,151 @@
 
           const regions = Object.keys(regionData);
           const revenues = Object.values(regionData);
+          const totalRevenue = revenues.reduce((a, b) => a + b, 0);
           const maxRevenue = Math.max(...revenues, 1);
-
+          
+          // Get chart type from Agent response
+          const activeChartType = (result.chart_type || 'bar').toLowerCase();
+          
           chartGrid.innerHTML = '';
+          chartGrid.style.flexDirection = 'row';
+          chartGrid.style.alignItems = 'flex-end';
+          chartGrid.style.justifyContent = 'space-around';
 
-          regions.forEach((reg, idx) => {
-            const rev = regionData[reg];
-            const pct = (rev / maxRevenue) * 100;
+          const colors = ['#6366f1', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+
+          if (activeChartType === 'pie' || activeChartType === 'donut') {
+            // Render Donut/Pie Chart inside SVG
+            chartGrid.style.alignItems = 'center';
+            chartGrid.style.flexDirection = 'column';
+            chartGrid.style.height = 'auto';
             
-            const barContainer = document.createElement('div');
-            barContainer.className = 'chart-bar-container';
+            let svgHtml = `<svg viewBox="0 0 42 42" class="chart-svg" style="width: 180px; height: 180px; transform: rotate(-90deg); filter: drop-shadow(0 4px 15px rgba(0,0,0,0.15));">`;
+            let accumPct = 0;
             
-            const bar = document.createElement('div');
-            bar.className = 'chart-bar';
-            bar.style.height = '0%'; // Start at 0 for entrance animation
+            regions.forEach((reg, idx) => {
+              const pct = (regionData[reg] / totalRevenue) * 100;
+              const offset = 100 - accumPct;
+              const color = colors[idx % colors.length];
+              
+              svgHtml += `
+                <circle class="donut-segment" cx="21" cy="21" r="15.915" 
+                        fill="transparent" stroke="${color}" stroke-width="5" 
+                        stroke-dasharray="${pct} ${100 - pct}" stroke-dashoffset="${offset}">
+                  <title>${reg}: $${(regionData[reg] / 1000).toFixed(1)}K (${pct.toFixed(1)}%)</title>
+                </circle>`;
+              accumPct += pct;
+            });
+            svgHtml += `</svg>`;
             
-            const tooltip = document.createElement('div');
-            tooltip.className = 'chart-bar-tooltip';
-            tooltip.textContent = `$${(rev / 1000).toFixed(1)}K`;
-            bar.appendChild(tooltip);
+            // Render Legend
+            let legendHtml = `<div class="chart-legend">`;
+            regions.forEach((reg, idx) => {
+              const color = colors[idx % colors.length];
+              const pct = ((regionData[reg] / totalRevenue) * 100).toFixed(1);
+              legendHtml += `
+                <div class="legend-item">
+                  <div class="legend-color" style="background: ${color};"></div>
+                  <span>${reg} (${pct}%)</span>
+                </div>`;
+            });
+            legendHtml += `</div>`;
             
-            const label = document.createElement('div');
-            label.className = 'chart-label';
-            label.textContent = reg;
-            
-            barContainer.appendChild(bar);
-            barContainer.appendChild(label);
-            chartGrid.appendChild(barContainer);
-            
-            // Trigger animation in next rendering frames
-            setTimeout(() => {
-              bar.style.height = `${pct}%`;
-            }, 100 + idx * 100);
-          });
+            chartGrid.innerHTML = svgHtml + legendHtml;
+          } 
+          else if (activeChartType === 'line') {
+            // Render Line Chart inside SVG
+            chartGrid.style.alignItems = 'stretch';
+            chartGrid.style.flexDirection = 'column';
+            chartGrid.style.height = 'auto';
+
+            let points = '';
+            const width = 500;
+            const height = 150;
+            const padding = 20;
+
+            regions.forEach((reg, idx) => {
+              const val = regionData[reg];
+              const x = padding + (idx / Math.max(regions.length - 1, 1)) * (width - 2 * padding);
+              const y = height - padding - (val / maxRevenue) * (height - 2 * padding);
+              points += `${x},${y} `;
+            });
+
+            let svgHtml = `
+              <svg viewBox="0 0 ${width} ${height}" class="chart-svg" style="width: 100%; height: 160px; filter: drop-shadow(0 4px 10px rgba(99,102,241,0.25));">
+                <!-- Grid Lines -->
+                <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="var(--border-card)" stroke-width="1"></line>
+                <line x1="${padding}" y1="${padding}" x2="${width - padding}" y2="${padding}" stroke="var(--border-card)" stroke-width="1" stroke-dasharray="4"></line>
+                
+                <!-- Line path -->
+                <polyline fill="none" stroke="url(#lineGrad)" stroke-width="4" points="${points}"></polyline>
+                
+                <!-- Definitions for gradients -->
+                <defs>
+                  <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#6366f1"></stop>
+                    <stop offset="100%" stop-color="#a855f7"></stop>
+                  </linearGradient>
+                </defs>
+            `;
+
+            // Draw Data points
+            regions.forEach((reg, idx) => {
+              const val = regionData[reg];
+              const x = padding + (idx / Math.max(regions.length - 1, 1)) * (width - 2 * padding);
+              const y = height - padding - (val / maxRevenue) * (height - 2 * padding);
+              
+              svgHtml += `
+                <circle cx="${x}" cy="${y}" r="6" fill="var(--bg-dark)" stroke="#a855f7" stroke-width="3" style="cursor:pointer;">
+                  <title>${reg}: $${(val / 1000).toFixed(1)}K</title>
+                </circle>
+                <text x="${x}" y="${height - 2}" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-weight="600">${reg}</text>
+                <text x="${x}" y="${y - 10}" font-size="9" fill="var(--text-main)" text-anchor="middle" font-weight="700">$${(val / 1000).toFixed(0)}K</text>
+              `;
+            });
+
+            svgHtml += `</svg>`;
+            chartGrid.innerHTML = svgHtml;
+          } 
+          else {
+            // Render Bar Chart (Default)
+            chartGrid.style.height = '220px';
+            regions.forEach((reg, idx) => {
+              const rev = regionData[reg];
+              const pct = (rev / maxRevenue) * 100;
+              
+              const barContainer = document.createElement('div');
+              barContainer.className = 'chart-bar-container';
+              
+              const bar = document.createElement('div');
+              bar.className = 'chart-bar';
+              bar.style.height = '0%'; // Start at 0 for entrance animation
+              
+              const tooltip = document.createElement('div');
+              tooltip.className = 'chart-bar-tooltip';
+              tooltip.textContent = `$${(rev / 1000).toFixed(1)}K`;
+              bar.appendChild(tooltip);
+              
+              const label = document.createElement('div');
+              label.className = 'chart-label';
+              label.textContent = reg;
+              
+              barContainer.appendChild(bar);
+              barContainer.appendChild(label);
+              chartGrid.appendChild(barContainer);
+              
+              // Trigger animation in next rendering frames
+              setTimeout(() => {
+                bar.style.height = `${pct}%`;
+              }, 100 + idx * 100);
+            });
+          }
 
           chartBox.style.display = 'flex';
+          const displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? '📊 Category Distribution Chart (Pie)' : 
+                               activeChartType === 'line' ? '📈 Regional Performance Trend Chart (Line)' : 
+                               '📊 Regional Revenue Comparison Chart (Bar)';
+          chartBox.querySelector('.chart-title').innerHTML = displayTitle;
         } else {
           chartBox.style.display = 'none';
         }
