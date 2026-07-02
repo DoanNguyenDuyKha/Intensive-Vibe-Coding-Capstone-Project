@@ -967,17 +967,6 @@
       <button class="btn" id="themeToggleBtn" style="padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 20px; box-shadow: none; border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="toggleTheme()">
         🌙 Dark Mode
       </button>
-      <select id="langSelect" class="nav-btn-select" onchange="changeLanguage(this.value)" style="padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 20px; box-shadow: none; border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s ease; outline: none;">
-        <option value="en">🇺🇸 English</option>
-        <option value="vi">🇻🇳 Tiếng Việt</option>
-        <option value="ja">🇯🇵 日本語 (Japanese)</option>
-        <option value="ko">🇰🇷 한국어 (Korean)</option>
-        <option value="zh">🇨🇳 中文 (Chinese)</option>
-        <option value="fr">🇫🇷 Français (French)</option>
-        <option value="es">🇪🇸 Español (Spanish)</option>
-        <option value="de">🇩🇪 Deutsch (German)</option>
-        <option value="th">🇹🇭 ไทย (Thai)</option>
-      </select>
       <span class="badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #34d399;">
         ● SQLite MCP Connected
       </span>
@@ -1002,19 +991,19 @@
         <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem;">
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt(currentLang === 'vi' ? 'So sánh doanh thu Q4 giữa vùng North và South.' : 'Compare Q4 revenue between North and South regions.')">
+                    onclick="setPrompt('Compare Q4 revenue between North and South regions.')">
               👉 Compare North & South Q4
             </button>
           </li>
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt(currentLang === 'vi' ? 'Hiển thị tổng doanh thu theo danh mục sản phẩm (Electronics, Furniture, Software) trong Q3 và Q4.' : 'Show total revenue by product category (Electronics, Furniture, Software) across Q3 and Q4.')">
+                    onclick="setPrompt('Show total revenue by product category (Electronics, Furniture, Software) across Q3 and Q4.')">
               👉 Total Revenue by Category
             </button>
           </li>
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt(currentLang === 'vi' ? 'Tìm nhân viên bán hàng có giá trị đơn hàng trung bình cao nhất và hiển thị chi tiết doanh số.' : 'Find the sales rep with the highest average deal size and display their sales details.')">
+                    onclick="setPrompt('Find the sales rep with the highest average deal size and display their sales details.')">
               👉 Top Sales Representative
             </button>
           </li>
@@ -1123,345 +1112,8 @@
     let currentRawJson = null;
     let salesData = [];
 
-    let currentLang = localStorage.getItem('lang') || 'en';
 
-    async function updatePageLanguage() {
-      const brandTitle = document.querySelector('.brand-title');
-      const sectionTitles = document.querySelectorAll('.section-title');
-      const dbTitle = document.querySelector('.db-editor-box .section-title');
-      const dbDesc = document.querySelector('.db-editor-box p');
-      const promptInput = document.getElementById('promptInput');
-      const generateBtn = document.getElementById('generateBtn');
-      const exportBtn = document.getElementById('exportPdfBtn');
-      const sampleBtns = document.querySelectorAll('.left-sidebar ul button');
-      const headers = document.querySelectorAll('#dbTable th');
-      const tabs = document.querySelectorAll('.tab-btn');
 
-      if (currentLang === 'vi') {
-        if (brandTitle) brandTitle.textContent = 'Bảng vẽ Dữ liệu A2UI';
-        if (sectionTitles.length >= 2) {
-          sectionTitles[0].textContent = 'Yêu cầu Prompt';
-          sectionTitles[1].textContent = 'Câu hỏi Mẫu';
-        }
-        if (dbTitle) dbTitle.textContent = 'Trình sửa Dữ liệu SQLite';
-        if (dbDesc) dbDesc.innerHTML = 'Sửa giá trị trực tiếp trong các ô (tự động lưu). Sau đó bấm <strong>Tạo Giao diện</strong> để cập nhật.';
-        if (promptInput) promptInput.placeholder = 'Nhập câu lệnh phát sinh giao diện...';
-        if (generateBtn) generateBtn.innerHTML = '<span>🎨 Tạo Giao diện</span>';
-        if (exportBtn) exportBtn.innerHTML = '📄 Xuất Báo cáo';
-        if (sampleBtns.length >= 3) {
-          sampleBtns[0].textContent = '👉 So sánh vùng North & South Q4';
-          sampleBtns[1].textContent = '👉 Tổng Doanh thu theo Danh mục';
-          sampleBtns[2].textContent = '👉 Nhân viên Bán hàng Xuất sắc nhất';
-        }
-        if (headers.length >= 5) {
-          headers[0].textContent = 'Khu vực';
-          headers[1].textContent = 'Quý';
-          headers[2].textContent = 'Danh mục';
-          headers[3].textContent = 'Doanh thu ($)';
-          headers[4].textContent = 'Đã bán';
-        }
-        if (tabs.length >= 2) {
-          tabs[0].textContent = '🧠 Dấu vết Tác nhân';
-          tabs[1].textContent = '📋 JSON Đầu ra';
-        }
-      } else if (currentLang === 'en') {
-        if (brandTitle) brandTitle.textContent = 'A2UI Data Canvas Studio';
-        if (sectionTitles.length >= 2) {
-          sectionTitles[0].textContent = 'Prompt Request';
-          sectionTitles[1].textContent = 'Sample Queries';
-        }
-        if (dbTitle) dbTitle.textContent = 'SQLite Live Data Editor';
-        if (dbDesc) dbDesc.innerHTML = 'Edit values directly in the cells (auto-saves). Then click <strong>Generate Canvas</strong> to update the UI.';
-        if (promptInput) promptInput.placeholder = 'Enter layout generation query...';
-        if (generateBtn) generateBtn.innerHTML = '<span>🎨 Generate Canvas</span>';
-        if (exportBtn) exportBtn.innerHTML = '📄 Export Report';
-        if (sampleBtns.length >= 3) {
-          sampleBtns[0].textContent = '👉 Compare North & South Q4';
-          sampleBtns[1].textContent = '👉 Total Revenue by Category';
-          sampleBtns[2].textContent = '👉 Top Sales Representative';
-        }
-        if (headers.length >= 5) {
-          headers[0].textContent = 'Region';
-          headers[1].textContent = 'Quarter';
-          headers[2].textContent = 'Category';
-          headers[3].textContent = 'Revenue ($)';
-          headers[4].textContent = 'Sold';
-        }
-        if (tabs.length >= 2) {
-          tabs[0].textContent = '🧠 Agentic Trace';
-          tabs[1].textContent = '📋 Hybrid Output JSON';
-        }
-      } else {
-        // Fallback for other world languages: translate dynamically using Gemini API!
-        if (brandTitle) brandTitle.textContent = await translateTextAsync('A2UI Data Canvas Studio', currentLang);
-        if (sectionTitles.length >= 2) {
-          sectionTitles[0].textContent = await translateTextAsync('Prompt Request', currentLang);
-          sectionTitles[1].textContent = await translateTextAsync('Sample Queries', currentLang);
-        }
-        if (dbTitle) dbTitle.textContent = await translateTextAsync('SQLite Live Data Editor', currentLang);
-        if (dbDesc) {
-          const raw = 'Edit values directly in the cells (auto-saves). Then click <strong>Generate Canvas</strong> to update the UI.';
-          dbDesc.innerHTML = await translateTextAsync(raw, currentLang);
-        }
-        if (promptInput) promptInput.placeholder = await translateTextAsync('Enter layout generation query...', currentLang);
-        if (generateBtn) generateBtn.innerHTML = `<span>🎨 ${await translateTextAsync('Generate Canvas', currentLang)}</span>`;
-        if (exportBtn) exportBtn.innerHTML = `📄 ${await translateTextAsync('Export Report', currentLang)}`;
-        if (sampleBtns.length >= 3) {
-          sampleBtns[0].textContent = '👉 ' + await translateTextAsync('Compare North & South Q4', currentLang);
-          sampleBtns[1].textContent = '👉 ' + await translateTextAsync('Total Revenue by Category', currentLang);
-          sampleBtns[2].textContent = '👉 ' + await translateTextAsync('Top Sales Representative', currentLang);
-        }
-        if (headers.length >= 5) {
-          headers[0].textContent = await translateTextAsync('Region', currentLang);
-          headers[1].textContent = await translateTextAsync('Quarter', currentLang);
-          headers[2].textContent = await translateTextAsync('Category', currentLang);
-          headers[3].textContent = await translateTextAsync('Revenue ($)', currentLang);
-          headers[4].textContent = await translateTextAsync('Sold', currentLang);
-        }
-        if (tabs.length >= 2) {
-          tabs[0].textContent = '🧠 ' + await translateTextAsync('Agentic Trace', currentLang);
-          tabs[1].textContent = '📋 ' + await translateTextAsync('Hybrid Output JSON', currentLang);
-        }
-      }
-    }
-
-    async function changeLanguage(newLang) {
-      currentLang = newLang;
-      localStorage.setItem('lang', currentLang);
-      
-      const select = document.getElementById('langSelect');
-      if (select) select.value = currentLang;
-
-      await updatePageLanguage();
-
-      const promptInput = document.getElementById('promptInput');
-      if (promptInput) {
-        const val = promptInput.value.trim();
-        if (val) {
-          promptInput.value = await translateTextAsync(val, currentLang);
-        }
-      }
-
-      if (currentRawJson) {
-        const uiCopy = JSON.parse(JSON.stringify(currentRawJson.ui));
-        if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
-          uiCopy.updateComponents.components.forEach(comp => {
-            if (comp.text) comp.text = translateText(comp.text, currentLang);
-            if (comp.label) comp.label = translateText(comp.label, currentLang);
-            if (comp.title) comp.title = translateText(comp.title, currentLang);
-          });
-          renderA2uiCanvas(uiCopy);
-        }
-        renderSalesChart(currentRawJson);
-
-        if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
-          const translationPromises = uiCopy.updateComponents.components.map(async (comp) => {
-            if (comp.text) comp.text = await translateFieldAsync(comp.text, currentLang);
-            if (comp.label) comp.label = await translateFieldAsync(comp.label, currentLang);
-            if (comp.title) comp.title = await translateFieldAsync(comp.title, currentLang);
-          });
-          
-          await Promise.all(translationPromises);
-          renderA2uiCanvas(uiCopy);
-        }
-      }
-    }
-
-    function translateText(text, targetLang) {
-      if (!text || typeof text !== 'string') return text;
-      
-      let result = text;
-      
-      if (targetLang === 'vi') {
-        const mappings = [
-          ["Executive Summary", "Tóm tắt Báo cáo"],
-          ["Total Revenue", "Tổng Doanh Thu"],
-          ["Total Units Sold", "Tổng Số Lượng Bán"],
-          ["Avg Deal Size", "Giá Trị Đơn Hàng TB"],
-          ["Region", "Khu vực"],
-          ["Quarter", "Quý"],
-          ["Month", "Tháng"],
-          ["Product Category", "Danh mục"],
-          ["Sales Representative", "Nhân viên Bán hàng"],
-          ["Revenue", "Doanh thu"],
-          ["Button", "Xem chi tiết"],
-          ["Details", "Chi tiết"],
-          ["Drill Down", "Xem chi tiết"],
-          ["Drilldown", "Xem chi tiết"],
-          ["Detailed analysis", "Phân tích chi tiết"],
-          ["Comparative Analysis", "Biểu đồ So sánh"],
-          ["Trend Analysis", "Biểu đồ Xu hướng"],
-          ["Distribution Analysis", "Biểu đồ Phân bổ"],
-          ["Top Sales Representative", "Nhân viên Bán hàng Xuất sắc nhất"],
-          ["Sales Performance Summary", "Tóm tắt Hiệu suất Bán hàng"],
-          ["Sales Dashboard", "Bảng Điều khiển Doanh số"],
-          ["Total revenue for Q3 and Q4 reached", "Tổng doanh thu Q3 và Q4 đạt"],
-          ["The North region contributed", "Khu vực phía Bắc đóng góp"],
-          ["The South region contributed", "Khu vực phía Nam đóng góp"],
-          ["contributed", "đóng góp"],
-          ["North region", "Vùng Bắc"],
-          ["South region", "Vùng Nam"],
-          ["region", "vùng"]
-        ];
-        for (const [enWord, viWord] of mappings) {
-          const regex = new RegExp(enWord, 'gi');
-          result = result.replace(regex, viWord);
-        }
-      } else {
-        const mappings = [
-          ["Tóm tắt Báo cáo", "Executive Summary"],
-          ["Tóm tắt Điều hành", "Executive Summary"],
-          ["Tổng Doanh Thu", "Total Revenue"],
-          ["Tổng Số Lượng Bán", "Total Units Sold"],
-          ["Giá Trị Đơn Hàng TB", "Avg Deal Size"],
-          ["Khu vực", "Region"],
-          ["Quý", "Quarter"],
-          ["Tháng", "Month"],
-          ["Danh mục", "Product Category"],
-          ["Nhân viên Bán hàng", "Sales Representative"],
-          ["Doanh thu", "Revenue"],
-          ["Xem chi tiết", "Drill Down"],
-          ["Chi tiết", "Details"],
-          ["Phân tích chi tiết", "Detailed analysis"],
-          ["Biểu đồ So sánh", "Comparative Analysis"],
-          ["Biểu đồ Xu hướng", "Trend Analysis"],
-          ["Biểu đồ Phân bổ", "Distribution Analysis"],
-          ["Nhân viên Bán hàng Xuất sắc nhất", "Top Sales Representative"],
-          ["Tóm tắt Hiệu suất Bán hàng", "Sales Performance Summary"],
-          ["Bảng Điều khiển Doanh số", "Sales Dashboard"],
-          ["Tổng doanh thu Q3 và Q4 đạt", "Total revenue for Q3 and Q4 reached"],
-          ["Khu vực phía Bắc đóng góp", "The North region contributed"],
-          ["Khu vực phía Nam đóng góp", "The South region contributed"],
-          ["đóng góp", "contributed"],
-          ["Vùng Bắc", "North region"],
-          ["Vùng Nam", "South region"]
-        ];
-        for (const [viWord, enWord] of mappings) {
-          const regex = new RegExp(viWord, 'gi');
-          result = result.replace(regex, enWord);
-        }
-      }
-      return result;
-    }
-
-    async function translateTextAsync(text, targetLang) {
-      if (!text || typeof text !== 'string' || text.trim() === '') return text;
-      
-      const trimmed = text.trim();
-      const lower = trimmed.toLowerCase();
-      
-      const dict = {
-        "executive summary": targetLang === 'vi' ? "Tóm tắt Báo cáo" : "Executive Summary",
-        "total revenue": targetLang === 'vi' ? "Tổng Doanh Thu" : "Total Revenue",
-        "total units sold": targetLang === 'vi' ? "Tổng Số Lượng Bán" : "Total Units Sold",
-        "avg deal size": targetLang === 'vi' ? "Giá Trị Đơn Hàng TB" : "Avg Deal Size",
-        "region": targetLang === 'vi' ? "Khu vực" : "Region",
-        "quarter": targetLang === 'vi' ? "Quý" : "Quarter",
-        "month": targetLang === 'vi' ? "Tháng" : "Month",
-        "product category": targetLang === 'vi' ? "Danh mục" : "Product Category",
-        "sales representative": targetLang === 'vi' ? "Nhân viên Bán hàng" : "Sales Representative",
-        "revenue": targetLang === 'vi' ? "Doanh thu" : "Revenue",
-        "details": targetLang === 'vi' ? "Chi tiết" : "Details",
-        "drill down": targetLang === 'vi' ? "Xem chi tiết" : "Drill Down",
-        "drilldown": targetLang === 'vi' ? "Xem chi tiết" : "Drill Down",
-        "detailed analysis": targetLang === 'vi' ? "Phân tích chi tiết" : "Detailed analysis",
-        "comparative analysis": targetLang === 'vi' ? "Biểu đồ So sánh" : "Comparative Analysis",
-        "trend analysis": targetLang === 'vi' ? "Biểu đồ Xu hướng" : "Trend Analysis",
-        "distribution analysis": targetLang === 'vi' ? "Biểu đồ Phân bổ" : "Distribution Analysis",
-        "top sales representative": targetLang === 'vi' ? "Nhân viên Bán hàng Xuất sắc nhất" : "Top Sales Representative",
-        "sales performance summary": targetLang === 'vi' ? "Tóm tắt Hiệu suất Bán hàng" : "Sales Performance Summary",
-        "sales dashboard": targetLang === 'vi' ? "Bảng Điều khiển Doanh số" : "Sales Dashboard",
-        "north region": targetLang === 'vi' ? "Vùng miền Bắc" : "North Region",
-        "south region": targetLang === 'vi' ? "Vùng miền Nam" : "South Region"
-      };
-      
-      if (dict[lower]) {
-        return dict[lower];
-      }
-      
-      // Save API calls for numbers or very short strings with no letters
-      if (!/[a-zA-Z]/.test(trimmed) || trimmed.length < 4) {
-        return trimmed;
-      }
-      
-      try {
-        const response = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: trimmed, target_lang: targetLang })
-        });
-        if (!response.ok) throw new Error("Translation API failed");
-        const data = await response.json();
-        return data.translated_text || trimmed;
-      } catch (err) {
-        console.warn("Translation failed, falling back to local translateText:", err);
-        return translateText(trimmed, targetLang);
-      }
-    }
-
-    async function translateFieldAsync(field, targetLang) {
-      if (!field) return field;
-      
-      if (typeof field === 'string') {
-        return await translateTextAsync(field, targetLang);
-      }
-      
-      if (typeof field === 'object') {
-        const copy = JSON.parse(JSON.stringify(field));
-        if (copy.call === 'formatString' && copy.args && typeof copy.args.value === 'string') {
-          copy.args.value = await translateTextAsync(copy.args.value, targetLang);
-        } else if (copy.value && typeof copy.value === 'string') {
-          copy.value = await translateTextAsync(copy.value, targetLang);
-        }
-        return copy;
-      }
-      return field;
-    }
-
-    async function toggleLanguage() {
-      currentLang = currentLang === 'en' ? 'vi' : 'en';
-      localStorage.setItem('lang', currentLang);
-      updatePageLanguage();
-      
-      const promptInput = document.getElementById('promptInput');
-      if (promptInput) {
-        const val = promptInput.value.trim();
-        if (val === 'Compare Q4 revenue between North and South regions.' || val === 'So sánh doanh thu Q4 giữa vùng North và South.') {
-          promptInput.value = currentLang === 'vi' ? 'So sánh doanh thu Q4 giữa vùng North và South.' : 'Compare Q4 revenue between North and South regions.';
-        } else if (val === 'Show total revenue by product category (Electronics, Furniture, Software) across Q3 and Q4.' || val === 'Hiển thị tổng doanh thu theo danh mục sản phẩm (Electronics, Furniture, Software) trong Q3 và Q4.') {
-          promptInput.value = currentLang === 'vi' ? 'Hiển thị tổng doanh thu theo danh mục sản phẩm (Electronics, Furniture, Software) trong Q3 và Q4.' : 'Show total revenue by product category (Electronics, Furniture, Software) across Q3 and Q4.';
-        } else if (val === 'Find the sales rep with the highest average deal size and display their sales details.' || val === 'Tìm nhân viên bán hàng có giá trị đơn hàng trung bình cao nhất và hiển thị chi tiết doanh số.') {
-          promptInput.value = currentLang === 'vi' ? 'Tìm nhân viên bán hàng có giá trị đơn hàng trung bình cao nhất và hiển thị chi tiết doanh số.' : 'Find the sales rep with the highest average deal size and display their sales details.';
-        }
-      }
-
-      // Live update of existing rendered canvas & chart if present
-      if (currentRawJson) {
-        // Step 1: Render client-side translations immediately for zero latency
-        const uiCopy = JSON.parse(JSON.stringify(currentRawJson.ui));
-        if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
-          uiCopy.updateComponents.components.forEach(comp => {
-            if (comp.text) comp.text = translateText(comp.text, currentLang);
-            if (comp.label) comp.label = translateText(comp.label, currentLang);
-            if (comp.title) comp.title = translateText(comp.title, currentLang);
-          });
-          renderA2uiCanvas(uiCopy);
-        }
-        renderSalesChart(currentRawJson);
-
-        // Step 2: Asynchronously fetch high-quality AI translations for complex paragraph descriptions
-        if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
-          const translationPromises = uiCopy.updateComponents.components.map(async (comp) => {
-            if (comp.text) comp.text = await translateFieldAsync(comp.text, currentLang);
-            if (comp.label) comp.label = await translateFieldAsync(comp.label, currentLang);
-            if (comp.title) comp.title = await translateFieldAsync(comp.title, currentLang);
-          });
-          
-          await Promise.all(translationPromises);
-          renderA2uiCanvas(uiCopy);
-        }
-      }
-    }
 
     // Theme Toggle implementation
     function toggleTheme() {
@@ -1489,9 +1141,6 @@
     // Load SQLite database data on startup
     window.onload = function() {
       loadDbData();
-      const select = document.getElementById('langSelect');
-      if (select) select.value = currentLang;
-      updatePageLanguage();
       // Initialize theme toggle button text
       const savedTheme = localStorage.getItem('theme') || 'light';
       const toggleBtn = document.getElementById('themeToggleBtn');
@@ -2198,7 +1847,7 @@
         const response = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: prompt, lang: currentLang })
+          body: JSON.stringify({ prompt: prompt })
         });
 
         if (!response.ok) {

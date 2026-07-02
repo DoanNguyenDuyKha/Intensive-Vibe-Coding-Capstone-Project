@@ -84,7 +84,6 @@ from app.agent import sales_canvas_workflow, generate_content_with_retry
 from typing import Optional
 class PromptRequest(BaseModel):
     prompt: str
-    lang: Optional[str] = "en"
 
 
 import sqlite3
@@ -159,29 +158,7 @@ def read_canvas():
     return FileResponse(str(index_path))
 
 
-class TranslateRequest(BaseModel):
-    text: str
-    target_lang: str
 
-
-@app.post("/api/translate")
-def translate_text(request: TranslateRequest):
-    """Translate arbitrary layout/summary text dynamically between English and Vietnamese using Gemini."""
-    try:
-        from google import genai
-        client = genai.Client()
-        
-        target = "Vietnamese" if request.target_lang == "vi" else "English"
-        sys_prompt = f"You are a professional business metrics and dashboard translator. Translate the given text into natural, professional {target} for a corporate sales report dashboard. Return ONLY the translated text without any preamble, explanation, or quotes."
-        
-        resp = generate_content_with_retry(
-            client=client,
-            model="gemini-2.5-flash",
-            contents=f"{sys_prompt}\n\nText: {request.text}"
-        )
-        return {"translated_text": resp.text.strip()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/generate")
@@ -192,7 +169,7 @@ def generate_canvas(request: PromptRequest):
         unique_id = str(uuid.uuid4())
         session_service = InMemorySessionService()
         session = session_service.create_session_sync(user_id=unique_id, app_name="canvas")
-        session.state["language"] = request.lang or "en"
+        session.state["language"] = "en"
         runner = Runner(agent=sales_canvas_workflow, session_service=session_service, app_name="canvas")
 
         user_message = types.Content(

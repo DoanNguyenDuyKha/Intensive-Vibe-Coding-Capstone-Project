@@ -401,25 +401,10 @@ def ui_generator_node(ctx: Context) -> dict:
     update_msg = ctx.state.get("update_message") if isinstance(ctx.state, dict) else getattr(ctx.state, "update_message", None)
     update_info = f'\n    SYSTEM ACTION STATUS: "{update_msg}"\n    (Please display a clean success notification card or label at the top of the dashboard layout to show the user that their data update was executed successfully.)\n' if update_msg else ""
 
-    language = ctx.state.get("language", "en") if isinstance(ctx.state, dict) else getattr(ctx.state, "language", "en")
-    
-    lang_map = {
-        "en": "ENGLISH",
-        "vi": "VIETNAMESE",
-        "ja": "JAPANESE",
-        "ko": "KOREAN",
-        "zh": "CHINESE",
-        "fr": "FRENCH",
-        "es": "SPANISH",
-        "de": "GERMAN",
-        "th": "THAI"
-    }
-    lang_name = lang_map.get(language, "ENGLISH")
-    
-    lang_info = f"""
+    lang_info = """
     LANGUAGE REQUIREMENT:
-    You MUST generate all UI text, titles, labels, descriptions, and summaries in {lang_name}.
-    Keep all numbers, currency signs ($ or USD), and raw data fields (like representative names, category names) original. Just translate the UI descriptive text, headers, and summaries.
+    You MUST generate all UI text, titles, labels, descriptions, and summaries in ENGLISH.
+    Keep all numbers, currency signs ($ or USD), and raw data fields (like representative names, category names) original.
     """
 
     prompt = f"""
