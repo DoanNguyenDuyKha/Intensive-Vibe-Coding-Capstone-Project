@@ -1664,7 +1664,12 @@
           }
 
           // Get chart type from Agent response
-          const activeChartType = (result.chart_type || 'bar').toLowerCase();
+          let activeChartType = (result.chart_type || 'bar').toLowerCase();
+          
+          // Auto-fallback: If there is only 1 data point, line/pie charts do not make sense and line charts cannot draw any line connection.
+          if (labels && labels.length <= 1) {
+            activeChartType = 'bar';
+          }
           
           chartGrid.innerHTML = '';
           chartGrid.style.flexDirection = 'row';
