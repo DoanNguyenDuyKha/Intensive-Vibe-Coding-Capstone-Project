@@ -148,6 +148,20 @@ def clean_json_string(s: str) -> str:
     return s.strip()
 
 
+def clean_sql_query(s: str) -> str:
+    """Removes SQL code block markdown wrappers (sql, sqlite, etc.) robustly."""
+    s = s.strip()
+    import re
+    match = re.search(r'```(?:sql|sqlite)?\s*(.*?)\s*```', s, re.DOTALL | re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    if s.startswith("```"):
+        lines = s.splitlines()
+        if len(lines) > 1 and (lines[0].lower().startswith("```sql") or lines[0].lower().startswith("```sqlite") or lines[0] == "```"):
+            return "\n".join(lines[1:]).strip("`").strip()
+    return s.strip("`").strip()
+
+
 def validate_hybrid_output(output_str: str, validator: A2uiValidator, raw_data_fallback: str) -> dict:
     """Validates that the LLM output contains both valid sales data and valid A2UI v0.9 layout."""
     try:
@@ -224,7 +238,7 @@ def intent_router_node(ctx: Context) -> str:
             model="gemini-2.5-flash",
             contents=f"{sys_prompt}\n\nUser request: {prompt}"
         )
-        sql = resp.text.strip().replace('```sql','').replace('```','')
+        sql = clean_sql_query(resp.text)
         res = update_sales_data(sql)
         ctx.state["update_message"] = f"Database update executed: {res}"
     return "next"
@@ -272,7 +286,7 @@ def data_fetcher_node(ctx: Context) -> str:
             model="gemini-2.5-flash",
             contents=f"{sys_prompt}\n\nUser request: {prompt}"
         )
-        query = resp.text.strip().replace('```sql','').replace('```','')
+        query = clean_sql_query(resp.text)
     else:
         query = "SELECT region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep FROM sales;"
         
@@ -284,7 +298,8 @@ def data_fetcher_node(ctx: Context) -> str:
         if "error" in parsed_res:
             raise ValueError(parsed_res["error"])
     except Exception as e:
-        print(f">>> DATA FETCHER ERROR: {e!s}. Falling back to full query.", flush=True)
+        safe_err = str(e).encode('ascii', errors='ignore').decode('ascii')
+        print(f">>> DATA FETCHER ERROR: {safe_err}. Falling back to full query.", flush=True)
         # Fallback to full data if query fails
         fallback_query = "SELECT region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep FROM sales;"
         result_str = query_sales_data(fallback_query)
