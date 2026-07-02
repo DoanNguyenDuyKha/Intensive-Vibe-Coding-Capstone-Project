@@ -429,7 +429,9 @@ def ui_generator_node(ctx: Context) -> dict:
        - Render labels and values using Text components.
        - The root of the components list must have id "root".
        - All referenced component IDs in "children" list must exist.
-       - You MUST always include an Executive Summary Card (id="exec-summary") at the top of the children list containing narrative insights and trends calculated from the data.
+       - **Custom Dashboard Title**: The dashboard title (rendered inside the top title card) MUST directly reflect the specific user query (e.g., "Top Sales Representative", "Best Sales Employee" / "Nhân viên Kinh doanh Xuất sắc nhất" instead of a generic "Q3 & Q4 Sales Dashboard").
+       - **Concise Executive Summary**: The Executive Summary (id="exec-summary") MUST be extremely concise, punchy, and short (maximum 2-3 bullet points, using standard list symbols like "-" or "•"). Do NOT write long paragraphs.
+       - **Strict Emoji Control**: Use emojis EXTREMELY sparingly (maximum 1 emoji in the main title card only). Do NOT spam emojis in the executive summary, key-value labels, or description cards. Keep it highly professional and premium.
        - For regional sales cards, you should add a Button (e.g. id="drill-north") with action set to "drilldown:<RegionName>" (e.g. "drilldown:North") to enable interactive drilldown analysis.
     """
 

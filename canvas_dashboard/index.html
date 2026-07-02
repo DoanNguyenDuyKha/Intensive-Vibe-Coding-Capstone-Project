@@ -859,10 +859,15 @@
 
     /* ============ RESPONSIVE LAYOUTS ============ */
     @media (max-width: 1280px) {
+      body {
+        height: auto;
+        max-height: none;
+        overflow: auto;
+      }
       .container {
         flex-direction: column;
         height: auto;
-        overflow-y: auto;
+        overflow: visible;
       }
       .left-sidebar, .right-sidebar {
         width: 100%;
@@ -1036,7 +1041,7 @@
       </div>
       
       <!-- Integrated Dynamic Bar Chart Box -->
-      <div class="chart-box" id="chartBox">
+      <div class="chart-box" id="chartBox" style="margin-bottom: 2rem;">
         <div class="chart-title">📊 Dynamic Revenue Analysis Chart</div>
         <div class="chart-grid" id="chartGrid"></div>
       </div>
@@ -1443,22 +1448,11 @@
         }
       }
 
-      // Add icons based on textual context and resolve dynamic values
+      // Resolve dynamic values with no automatic emoji decoration to keep the UI clean
       function enrichText(text) {
         const resolved = resolveDynamicValue(text);
         if (resolved === null || resolved === undefined) return '';
-        const textStr = String(resolved);
-        let enriched = textStr;
-        if (textStr.includes("revenue") || textStr.includes("doanh thu") || textStr.includes("$")) {
-          enriched = "💵 " + enriched;
-        } else if (textStr.includes("rep") || textStr.includes("nhân viên") || textStr.includes("salesperson")) {
-          enriched = "👤 " + enriched;
-        } else if (textStr.includes("region") || textStr.includes("khu vực") || textStr.includes("North") || textStr.includes("South")) {
-          enriched = "📍 " + enriched;
-        } else if (textStr.includes("growth") || textStr.includes("tăng trưởng") || textStr.includes("so sánh")) {
-          enriched = "📈 " + enriched;
-        }
-        return enriched;
+        return String(resolved);
       }
 
       function renderNode(compId) {
@@ -1512,6 +1506,19 @@
             if (comp.child) {
               const childEl = renderNode(comp.child);
               if (childEl) el.appendChild(childEl);
+            }
+            break;
+
+          case 'List':
+            el = document.createElement('div');
+            el.className = comp.direction === 'horizontal' ? 'a2ui-row' : 'a2ui-column';
+            el.style.gap = '0.5rem';
+            if (comp.children) {
+              const childIds = Array.isArray(comp.children) ? comp.children : (comp.children.explicitList || []);
+              childIds.forEach(childId => {
+                const childEl = renderNode(childId);
+                if (childEl) el.appendChild(childEl);
+              });
             }
             break;
 
