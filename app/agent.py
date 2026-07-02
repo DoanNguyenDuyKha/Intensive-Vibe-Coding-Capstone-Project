@@ -111,7 +111,7 @@ class SalesDashboardState(BaseModel):
     final_output: Optional[dict] = None
     critic_feedback: Optional[str] = None
     update_message: Optional[str] = None
-    language: str = "en"
+
 
 
 # ---------------------------------------------------------------------------
@@ -279,7 +279,7 @@ def intent_router_node(ctx: Context) -> str:
     
     lower_prompt = prompt.lower()
     
-    if "cập nhật" in lower_prompt or "update" in lower_prompt or "đổi" in lower_prompt or "change" in lower_prompt or "set" in lower_prompt or "modify" in lower_prompt:
+    if "update" in lower_prompt or "change" in lower_prompt or "set" in lower_prompt or "modify" in lower_prompt:
         from google import genai
         client = genai.Client()
         # Translate to SQL
@@ -306,7 +306,7 @@ def critic_node(ctx: Context) -> str:
     # Check if a chart was explicitly requested but missing
     prompt = ctx.state.get("user_prompt", "").lower()
         
-    if "biểu đồ" in prompt or "chart" in prompt:
+    if "chart" in prompt:
         import json
         ui_str = json.dumps(final_output)
         # Simple heuristic: if they wanted a chart, we expect BarChart or LineChart
@@ -335,10 +335,10 @@ def data_fetcher_node(ctx: Context) -> str:
         sys_prompt = """You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep).
         
         CRITICAL VALUE MAPPINGS:
-        - Regions in the database are always English: 'North', 'South'. Map 'Bắc'/'Miền Bắc' to 'North', and 'Nam'/'Miền Nam' to 'South'.
-        - Categories in the database are: 'Electronics', 'Furniture', 'Software'. Map 'Điện tử'/'Thiết bị điện tử' to 'Electronics', 'Nội thất' to 'Furniture', 'Phần mềm' to 'Software'.
+        - Regions in the database are: 'North', 'South'.
+        - Categories in the database are: 'Electronics', 'Furniture', 'Software'.
         - Quarters in the database are: 'Q3', 'Q4'.
-        - Months in the database are English names: 'July', 'August', 'September', 'October', 'November', 'December'. Map Vietnamese month numbers/names accordingly (e.g. 'Tháng 10' -> 'October', 'Tháng 7' -> 'July').
+        - Months in the database are: 'July', 'August', 'September', 'October', 'November', 'December'.
         
         Generate a valid SQL SELECT statement to answer the user's request. Return ONLY the raw SQL query, no markdown, no explanation."""
         resp = generate_content_with_retry(
@@ -401,15 +401,12 @@ def ui_generator_node(ctx: Context) -> dict:
     update_msg = ctx.state.get("update_message") if isinstance(ctx.state, dict) else getattr(ctx.state, "update_message", None)
     update_info = f'\n    SYSTEM ACTION STATUS: "{update_msg}"\n    (Please display a clean success notification card or label at the top of the dashboard layout to show the user that their data update was executed successfully.)\n' if update_msg else ""
 
-    lang_info = """
+    prompt = f"""
+    {instructions}
+
     LANGUAGE REQUIREMENT:
     You MUST generate all UI text, titles, labels, descriptions, and summaries in ENGLISH.
     Keep all numbers, currency signs ($ or USD), and raw data fields (like representative names, category names) original.
-    """
-
-    prompt = f"""
-    {instructions}
-    {lang_info}
 
     You MUST create a user interface that directly answers and satisfies the following user request:
     USER REQUEST: "{user_prompt}"
@@ -445,7 +442,7 @@ def ui_generator_node(ctx: Context) -> dict:
         - **Dashboard Title and Heading Typography**: For the main dashboard title (rendered inside the top title card), you MUST use a Text component with `variant="h1"` or `variant="heading"` to render it as a large, bold, premium title. For section titles (like "Executive Summary" or table section headers), you MUST use a Text component with `variant="h2"` or `variant="h3"` to render them as prominent, bold headings. Do NOT use the default body variant or caption variant for main dashboard or section titles.
         - The root of the components list must have id "root".
         - All referenced component IDs in "children" list must exist.
-        - **Custom Dashboard Title**: The dashboard title (rendered inside the top title card) MUST directly reflect the specific user query (e.g., "Top Sales Representative", "Best Sales Employee" / "Nhân viên Kinh doanh Xuất sắc nhất" instead of a generic "Q3 & Q4 Sales Dashboard").
+        - **Custom Dashboard Title**: The dashboard title (rendered inside the top title card) MUST directly reflect the specific user query (e.g., "Top Sales Representative", "Best Sales Employee" instead of a generic "Q3 & Q4 Sales Dashboard").
         - **Concise Executive Summary**: The Executive Summary (id="exec-summary") MUST be extremely concise, punchy, and short (maximum 2-3 bullet points, using standard list symbols like "-" or "•"). Do NOT write long paragraphs.
         - **Strict Emoji Control**: Use emojis EXTREMELY sparingly (maximum 1 emoji in the main title card only). Do NOT spam emojis in the executive summary, key-value labels, or description cards. Keep it highly professional and premium.
         - For regional sales cards, you should add a Button (e.g. id="drill-north") with action set to "drilldown:<RegionName>" (e.g. "drilldown:North") to enable interactive drilldown analysis.

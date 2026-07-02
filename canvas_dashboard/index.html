@@ -1111,7 +1111,7 @@
     let dbRows = [];
     let currentRawJson = null;
     let salesData = [];
-    const currentLang = 'en';
+
 
 
     // Theme Toggle implementation
@@ -1489,24 +1489,24 @@
                 
                 if (region) {
                   const promptInput = document.getElementById('promptInput');
-                  promptInput.value = currentLang === 'vi' ? `So sánh chi tiết doanh số vùng ${region}` : `Detailed analysis for region ${region}`;
+                  promptInput.value = `Detailed analysis for region ${region}`;
                   triggerGeneration();
                   return;
                 }
               }
               
               // Handle details highlight action
-              if (actionStr.toLowerCase().includes("detail") || actionStr.toLowerCase().includes("chi tiet")) {
+              if (actionStr.toLowerCase().includes("detail")) {
                 // Highlight all cards on click!
                 document.querySelectorAll('.a2ui-card').forEach(card => {
                   card.classList.toggle('highlight');
                 });
                 
-                document.getElementById('modalTitle').textContent = currentLang === 'vi' ? "🔍 Chi tiết Đã mở" : "🔍 Details Opened";
-                document.getElementById('modalBody').textContent = currentLang === 'vi' ? "Hệ thống đã làm nổi bật các thẻ báo cáo trên Canvas!" : "The system highlighted all report cards on the Canvas!";
+                document.getElementById('modalTitle').textContent = "🔍 Details Opened";
+                document.getElementById('modalBody').textContent = "The system highlighted all report cards on the Canvas!";
               } else {
-                document.getElementById('modalTitle').textContent = currentLang === 'vi' ? "⚡ Hành động được kích hoạt" : "⚡ Action Triggered";
-                document.getElementById('modalBody').textContent = currentLang === 'vi' ? `Hành động nút A2UI: "${actionStr}" kích hoạt thành công!` : `A2UI Button Action: "${actionStr}" successfully triggered!`;
+                document.getElementById('modalTitle').textContent = "⚡ Action Triggered";
+                document.getElementById('modalBody').textContent = `A2UI Button Action: "${actionStr}" successfully triggered!`;
               }
               document.getElementById('actionModal').style.display = 'flex';
             };
@@ -1665,7 +1665,7 @@
             accumPct += pct;
           });
           svgHtml += `</svg>`;
-          svgHtml += `<div class="donut-center-label"><div class="donut-center-value">${formatVal(totalValue)}</div><div class="donut-center-sub">${currentLang === 'vi' ? 'Tổng cộng' : 'Total'}</div></div>`;
+          svgHtml += `<div class="donut-center-label"><div class="donut-center-value">${formatVal(totalValue)}</div><div class="donut-center-sub">Total</div></div>`;
           svgHtml += `</div>`; // end donut-svg-container
 
           // Legend with values
@@ -1782,7 +1782,7 @@
             const tooltip = document.createElement('div');
             tooltip.className = 'chart-bar-tooltip';
             const pctOfTotal = ((val / totalValue) * 100).toFixed(1);
-            tooltip.textContent = `${pctOfTotal}% ${currentLang === 'vi' ? 'tổng' : 'of total'}`;
+            tooltip.textContent = `${pctOfTotal}% of total`;
             bar.appendChild(tooltip);
 
             const label = document.createElement('div');
@@ -1801,16 +1801,9 @@
         chartBox.style.display = 'flex';
         const cleanGroupKey = groupKey.replace(/_/g, ' ');
         const valueLabel = valueKey ? valueKey.replace(/_/g, ' ') : '';
-        let displayTitle = '';
-        if (currentLang === 'vi') {
-          displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Biểu đồ Tỉ lệ Phân bổ — theo ${cleanGroupKey}` :
-                         activeChartType === 'line' ? `📈 Biểu đồ Xu hướng — theo ${cleanGroupKey}` :
-                         `📊 Biểu đồ So sánh — theo ${cleanGroupKey}`;
-        } else {
-          displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Distribution Analysis — by ${cleanGroupKey}` :
-                         activeChartType === 'line' ? `📈 Trend Analysis — by ${cleanGroupKey}` :
-                         `📊 Comparative Analysis — by ${cleanGroupKey}`;
-        }
+        let displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Distribution Analysis — by ${cleanGroupKey}` :
+                       activeChartType === 'line' ? `📈 Trend Analysis — by ${cleanGroupKey}` :
+                       `📊 Comparative Analysis — by ${cleanGroupKey}`;
         if (valueLabel) displayTitle += ` <span style="font-size:0.8rem;color:var(--text-muted);font-weight:500;"> (${valueLabel})</span>`;
         chartBox.querySelector('.chart-title').innerHTML = displayTitle;
       } else {
