@@ -532,24 +532,39 @@
 
     .a2ui-button {
       background: var(--accent-gradient);
-      color: white;
+      color: #ffffff !important;
       border: none;
-      border-radius: 8px;
-      padding: 0.5rem 1.25rem;
-      font-weight: 600;
-      font-size: 0.8rem;
+      border-radius: 12px;
+      padding: 0.6rem 1.4rem;
+      font-weight: 700;
+      font-size: 0.825rem;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
     }
 
     .a2ui-button:hover {
       filter: brightness(1.2);
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
     }
 
     .a2ui-button:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
+    }
+
+    .a2ui-button * {
+      color: #ffffff !important;
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      background: transparent !important;
+      -webkit-text-fill-color: initial !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
 
     /* Highlight card class for action triggers */
@@ -1281,7 +1296,9 @@
     async function translateTextAsync(text, targetLang) {
       if (!text || typeof text !== 'string' || text.trim() === '') return text;
       
-      const lower = text.trim().toLowerCase();
+      const trimmed = text.trim();
+      const lower = trimmed.toLowerCase();
+      
       const dict = {
         "executive summary": targetLang === 'vi' ? "Tóm tắt Báo cáo" : "Executive Summary",
         "total revenue": targetLang === 'vi' ? "Tổng Doanh Thu" : "Total Revenue",
@@ -1302,26 +1319,52 @@
         "distribution analysis": targetLang === 'vi' ? "Biểu đồ Phân bổ" : "Distribution Analysis",
         "top sales representative": targetLang === 'vi' ? "Nhân viên Bán hàng Xuất sắc nhất" : "Top Sales Representative",
         "sales performance summary": targetLang === 'vi' ? "Tóm tắt Hiệu suất Bán hàng" : "Sales Performance Summary",
-        "sales dashboard": targetLang === 'vi' ? "Bảng Điều khiển Doanh số" : "Sales Dashboard"
+        "sales dashboard": targetLang === 'vi' ? "Bảng Điều khiển Doanh số" : "Sales Dashboard",
+        "north region": targetLang === 'vi' ? "Vùng miền Bắc" : "North Region",
+        "south region": targetLang === 'vi' ? "Vùng miền Nam" : "South Region"
       };
       
       if (dict[lower]) {
         return dict[lower];
       }
       
+      // Save API calls for numbers or very short strings with no letters
+      if (!/[a-zA-Z]/.test(trimmed) || trimmed.length < 4) {
+        return trimmed;
+      }
+      
       try {
         const response = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text, target_lang: targetLang })
+          body: JSON.stringify({ text: trimmed, target_lang: targetLang })
         });
         if (!response.ok) throw new Error("Translation API failed");
         const data = await response.json();
-        return data.translated_text || text;
+        return data.translated_text || trimmed;
       } catch (err) {
         console.warn("Translation failed, falling back to local translateText:", err);
-        return translateText(text, targetLang);
+        return translateText(trimmed, targetLang);
       }
+    }
+
+    async function translateFieldAsync(field, targetLang) {
+      if (!field) return field;
+      
+      if (typeof field === 'string') {
+        return await translateTextAsync(field, targetLang);
+      }
+      
+      if (typeof field === 'object') {
+        const copy = JSON.parse(JSON.stringify(field));
+        if (copy.call === 'formatString' && copy.args && typeof copy.args.value === 'string') {
+          copy.args.value = await translateTextAsync(copy.args.value, targetLang);
+        } else if (copy.value && typeof copy.value === 'string') {
+          copy.value = await translateTextAsync(copy.value, targetLang);
+        }
+        return copy;
+      }
+      return field;
     }
 
     async function toggleLanguage() {
@@ -1358,15 +1401,9 @@
         // Step 2: Asynchronously fetch high-quality AI translations for complex paragraph descriptions
         if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
           const translationPromises = uiCopy.updateComponents.components.map(async (comp) => {
-            if (comp.text && comp.text.length > 20) {
-              comp.text = await translateTextAsync(comp.text, currentLang);
-            }
-            if (comp.label && comp.label.length > 20) {
-              comp.label = await translateTextAsync(comp.label, currentLang);
-            }
-            if (comp.title && comp.title.length > 20) {
-              comp.title = await translateTextAsync(comp.title, currentLang);
-            }
+            if (comp.text) comp.text = await translateFieldAsync(comp.text, currentLang);
+            if (comp.label) comp.label = await translateFieldAsync(comp.label, currentLang);
+            if (comp.title) comp.title = await translateFieldAsync(comp.title, currentLang);
           });
           
           await Promise.all(translationPromises);
