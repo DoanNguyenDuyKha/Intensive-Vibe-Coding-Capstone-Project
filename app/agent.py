@@ -192,12 +192,22 @@ def validate_hybrid_output(output_str: str, validator: A2uiValidator, raw_data_f
 def intent_router_node(ctx: Context) -> str:
     """Analyzes the prompt to check if it's a database update request."""
     print(">>> STARTING INTENT ROUTER", flush=True)
+    print(">>> INTENT ROUTER: ctx.user_content =", getattr(ctx, "user_content", None), flush=True)
+    print(">>> INTENT ROUTER: ctx.state.user_prompt =", ctx.state.get("user_prompt"), flush=True)
     messages = ctx.state.get("messages", [])
     prompt = ctx.state.get("user_prompt", "")
         
     if not prompt and messages:
         prompt = messages[-1].parts[0].text
         
+    if not prompt and getattr(ctx, "user_content", None):
+        # Fallback to direct user content text if prompt is still not found in state
+        try:
+            prompt = ctx.user_content.parts[0].text
+        except Exception:
+            pass
+
+    print(">>> INTENT ROUTER RESOLVED PROMPT =", prompt, flush=True)
     ctx.state["user_prompt"] = prompt
         
     if not prompt:
