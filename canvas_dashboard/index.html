@@ -471,7 +471,7 @@
       flex: 1;
       min-width: 280px;
       position: relative;
-      overflow: hidden;
+      overflow: visible; /* Prevent text clipping inside cards */
     }
 
     .a2ui-card::after {
@@ -1032,7 +1032,7 @@
           📄 Export Report
         </button>
       </div>
-      <div id="canvasRoot" style="width: 100%; min-height: 100%; display: flex; flex-direction: column;">
+      <div id="canvasRoot" style="width: 100%; display: flex; flex-direction: column; gap: 1.5rem;">
         <div class="empty-state">
           <span class="empty-icon">🎨</span>
           <h3>Empty Workspace</h3>
@@ -1550,32 +1550,62 @@
           case 'Button':
             el = document.createElement('button');
             el.className = 'a2ui-button';
-            el.textContent = comp.label || comp.text || 'Button';
+            
+            // Render child component (like Text or Icon) instead of hardcoding 'Button'
+            if (comp.child) {
+              const childEl = renderNode(comp.child);
+              if (childEl) el.appendChild(childEl);
+            } else {
+              el.textContent = comp.label || comp.text || 'Button';
+            }
             
             // Action Binding implementation
             el.onclick = () => {
               const action = comp.action || 'Default Action';
+              let actionStr = '';
+              let actionContext = null;
               
-              if (action.startsWith('drilldown:')) {
-                const region = action.substring('drilldown:'.length);
-                const promptInput = document.getElementById('promptInput');
-                promptInput.value = `Detailed analysis for region ${region}`;
-                triggerGeneration();
-                return;
+              if (typeof action === 'object') {
+                if (action.event) {
+                  actionStr = action.event.name || '';
+                  actionContext = action.event.context || null;
+                } else if (action.functionCall) {
+                  actionStr = action.functionCall.call || '';
+                  actionContext = action.functionCall.args || null;
+                }
+              } else if (typeof action === 'string') {
+                actionStr = action;
               }
               
-              // Custom interactive trigger on the canvas
-              if (action.toLowerCase().includes("detail") || action.toLowerCase().includes("chi tiet")) {
+              // Handle drilldown action
+              if (actionStr === 'drilldown' || actionStr.startsWith('drilldown:')) {
+                let region = '';
+                if (actionStr.startsWith('drilldown:')) {
+                  region = actionStr.substring('drilldown:'.length);
+                } else if (actionContext) {
+                  region = actionContext.region || actionContext.value || '';
+                }
+                
+                if (region) {
+                  const promptInput = document.getElementById('promptInput');
+                  promptInput.value = currentLang === 'vi' ? `So sánh chi tiết doanh số vùng ${region}` : `Detailed analysis for region ${region}`;
+                  triggerGeneration();
+                  return;
+                }
+              }
+              
+              // Handle details highlight action
+              if (actionStr.toLowerCase().includes("detail") || actionStr.toLowerCase().includes("chi tiet")) {
                 // Highlight all cards on click!
                 document.querySelectorAll('.a2ui-card').forEach(card => {
                   card.classList.toggle('highlight');
                 });
                 
-                document.getElementById('modalTitle').textContent = "🔍 Details Opened";
-                document.getElementById('modalBody').textContent = "The system highlighted all report cards on the Canvas!";
+                document.getElementById('modalTitle').textContent = currentLang === 'vi' ? "🔍 Chi tiết Đã mở" : "🔍 Details Opened";
+                document.getElementById('modalBody').textContent = currentLang === 'vi' ? "Hệ thống đã làm nổi bật các thẻ báo cáo trên Canvas!" : "The system highlighted all report cards on the Canvas!";
               } else {
-                document.getElementById('modalTitle').textContent = "⚡ Action Triggered";
-                document.getElementById('modalBody').textContent = `A2UI Button Action: "${action}" successfully triggered!`;
+                document.getElementById('modalTitle').textContent = currentLang === 'vi' ? "⚡ Hành động được kích hoạt" : "⚡ Action Triggered";
+                document.getElementById('modalBody').textContent = currentLang === 'vi' ? `Hành động nút A2UI: "${actionStr}" kích hoạt thành công!` : `A2UI Button Action: "${actionStr}" successfully triggered!`;
               }
               document.getElementById('actionModal').style.display = 'flex';
             };
