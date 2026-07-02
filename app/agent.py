@@ -111,6 +111,7 @@ class SalesDashboardState(BaseModel):
     final_output: Optional[dict] = None
     critic_feedback: Optional[str] = None
     update_message: Optional[str] = None
+    language: str = "en"
 
 
 # ---------------------------------------------------------------------------
