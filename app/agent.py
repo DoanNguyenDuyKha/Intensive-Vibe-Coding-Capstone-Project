@@ -211,7 +211,7 @@ def intent_router_node(ctx: Context) -> str:
         # Translate to SQL
         sys_prompt = "You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep). Return ONLY a valid SQL UPDATE statement based on the user request. No markdown, no explanation."
         resp = client.models.generate_content(
-            model="gemini-flash-latest",
+            model="gemini-1.5-flash",
             contents=f"{sys_prompt}\n\nUser request: {prompt}"
         )
         sql = resp.text.strip().replace('```sql','').replace('```','')
@@ -259,7 +259,7 @@ def data_fetcher_node(ctx: Context) -> str:
         client = genai.Client()
         sys_prompt = "You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep). Generate a valid SQL SELECT statement to answer the user's request. Return ONLY the raw SQL query, no markdown, no explanation."
         resp = client.models.generate_content(
-            model="gemini-flash-latest",
+            model="gemini-1.5-flash",
             contents=f"{sys_prompt}\n\nUser request: {prompt}"
         )
         query = resp.text.strip().replace('```sql','').replace('```','')
@@ -352,7 +352,7 @@ def ui_generator_node(ctx: Context) -> dict:
 
     from google import genai
     client = genai.Client()
-    model_name = "gemini-flash-latest"
+    model_name = "gemini-1.5-flash"
     
     current_prompt = prompt
     attempts = 3
@@ -423,7 +423,7 @@ sales_canvas_workflow = Workflow(
 root_agent = Agent(
     name="root_agent",
     model=Gemini(
-        model="gemini-flash-latest",
+        model="gemini-1.5-flash",
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
     instruction="You are a helpful AI assistant designed to provide accurate and useful information.",
