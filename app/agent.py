@@ -438,16 +438,17 @@ def ui_generator_node(ctx: Context) -> dict:
     3. "chart_type": (Optional string) Choose the best chart type to visualize this query: "bar" (default for region/category comparative lists), "line" (ideal for quarter-over-quarter timeline trends), or "pie" (ideal for showing product category share distribution).
        
        Rules:
-       - Use ONLY the following Basic Catalog components: Column, Row, Text, Button, Card.
-       - Do NOT use raw HTML, CSS, or JS.
-       - Layout columns using Column and rows using Row. Group sections using Card.
-       - Render labels and values using Text components.
-       - The root of the components list must have id "root".
-       - All referenced component IDs in "children" list must exist.
-       - **Custom Dashboard Title**: The dashboard title (rendered inside the top title card) MUST directly reflect the specific user query (e.g., "Top Sales Representative", "Best Sales Employee" / "Nhân viên Kinh doanh Xuất sắc nhất" instead of a generic "Q3 & Q4 Sales Dashboard").
-       - **Concise Executive Summary**: The Executive Summary (id="exec-summary") MUST be extremely concise, punchy, and short (maximum 2-3 bullet points, using standard list symbols like "-" or "•"). Do NOT write long paragraphs.
-       - **Strict Emoji Control**: Use emojis EXTREMELY sparingly (maximum 1 emoji in the main title card only). Do NOT spam emojis in the executive summary, key-value labels, or description cards. Keep it highly professional and premium.
-       - For regional sales cards, you should add a Button (e.g. id="drill-north") with action set to "drilldown:<RegionName>" (e.g. "drilldown:North") to enable interactive drilldown analysis.
+        - Use ONLY the following Basic Catalog components: Column, Row, Text, Button, Card.
+        - Do NOT use raw HTML, CSS, or JS.
+        - Layout columns using Column and rows using Row. Group sections using Card.
+        - Render labels and values using Text components.
+        - **Dashboard Title and Heading Typography**: For the main dashboard title (rendered inside the top title card), you MUST use a Text component with `variant="h1"` or `variant="heading"` to render it as a large, bold, premium title. For section titles (like "Executive Summary" or table section headers), you MUST use a Text component with `variant="h2"` or `variant="h3"` to render them as prominent, bold headings. Do NOT use the default body variant or caption variant for main dashboard or section titles.
+        - The root of the components list must have id "root".
+        - All referenced component IDs in "children" list must exist.
+        - **Custom Dashboard Title**: The dashboard title (rendered inside the top title card) MUST directly reflect the specific user query (e.g., "Top Sales Representative", "Best Sales Employee" / "Nhân viên Kinh doanh Xuất sắc nhất" instead of a generic "Q3 & Q4 Sales Dashboard").
+        - **Concise Executive Summary**: The Executive Summary (id="exec-summary") MUST be extremely concise, punchy, and short (maximum 2-3 bullet points, using standard list symbols like "-" or "•"). Do NOT write long paragraphs.
+        - **Strict Emoji Control**: Use emojis EXTREMELY sparingly (maximum 1 emoji in the main title card only). Do NOT spam emojis in the executive summary, key-value labels, or description cards. Keep it highly professional and premium.
+        - For regional sales cards, you should add a Button (e.g. id="drill-north") with action set to "drilldown:<RegionName>" (e.g. "drilldown:North") to enable interactive drilldown analysis.
     """
 
     from google import genai
