@@ -205,7 +205,7 @@ def intent_router_node(ctx: Context) -> str:
     
     lower_prompt = prompt.lower()
     
-    if "cập nhật" in lower_prompt or "update" in lower_prompt or "đổi" in lower_prompt:
+    if "cập nhật" in lower_prompt or "update" in lower_prompt or "đổi" in lower_prompt or "change" in lower_prompt or "set" in lower_prompt or "modify" in lower_prompt:
         from google import genai
         client = genai.Client()
         # Translate to SQL
@@ -216,7 +216,7 @@ def intent_router_node(ctx: Context) -> str:
         )
         sql = resp.text.strip().replace('```sql','').replace('```','')
         res = update_sales_data(sql)
-        ctx.state["update_message"] = f"Đã thực hiện cập nhật: {res}"
+        ctx.state["update_message"] = f"Database update executed: {res}"
     return "next"
 
 @node(name="Critic_Node")
@@ -305,7 +305,7 @@ def ui_generator_node(ctx: Context) -> dict:
         user_prompt = getattr(ctx.state, "user_prompt", "")
         
     if not user_prompt:
-        user_prompt = "Tạo bảng điều khiển doanh số chung cho Q3 và Q4."
+        user_prompt = "Create a general sales dashboard for Q3 and Q4."
 
     update_msg = ctx.state.get("update_message") if isinstance(ctx.state, dict) else getattr(ctx.state, "update_message", None)
     update_info = f'\n    SYSTEM ACTION STATUS: "{update_msg}"\n    (Please display a clean success notification card or label at the top of the dashboard layout to show the user that their data update was executed successfully.)\n' if update_msg else ""

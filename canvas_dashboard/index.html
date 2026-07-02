@@ -24,7 +24,27 @@
       --success: #059669;
       --warning: #d97706;
       --danger: #dc2626;
+      --bg-table-header: #e2e8f0;
+      --bg-tabs-header: rgba(226, 232, 240, 0.8);
       --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --bg-dark: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --bg-input: rgba(15, 23, 42, 0.8);
+      --border-card: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #a855f7;
+      --accent-gradient: linear-gradient(135deg, #6366f1, #a855f7);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-table-header: #1e293b;
+      --bg-tabs-header: rgba(15, 23, 42, 0.8);
     }
 
     * {
@@ -66,7 +86,7 @@
     }
 
     header {
-      background: rgba(248, 250, 252, 0.8);
+      background: var(--bg-card);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-card);
       padding: 1rem 1.5rem;
@@ -101,9 +121,7 @@
       font-size: 1.35rem;
       font-weight: 800;
       letter-spacing: -0.025em;
-      background: linear-gradient(135deg, #0f172a, #475569);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--text-main);
     }
 
     .status-container {
@@ -136,7 +154,7 @@
       width: 420px;
       flex-shrink: 0;
       border-right: 1px solid var(--border-card);
-      background: rgba(241, 245, 249, 0.6);
+      background: var(--bg-card);
       padding: 1.5rem;
       display: flex;
       flex-direction: column;
@@ -215,7 +233,7 @@
     .db-editor-box {
       border: 1px solid var(--border-card);
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.6);
+      background: var(--bg-input);
       padding: 0.75rem;
       flex: 1;
       display: flex;
@@ -244,7 +262,7 @@
     }
 
     th {
-      background: #e2e8f0; /* Solid background prevents scroll overlap */
+      background: var(--bg-table-header); /* Solid background prevents scroll overlap */
       font-weight: 600;
       position: sticky;
       top: 0;
@@ -258,7 +276,7 @@
     }
 
     tbody tr:hover {
-      background: rgba(0, 0, 0, 0.04);
+      background: rgba(99, 102, 241, 0.08);
     }
 
     td input {
@@ -293,7 +311,7 @@
       width: 480px;
       flex-shrink: 0;
       border-left: 1px solid var(--border-card);
-      background: rgba(241, 245, 249, 0.8);
+      background: var(--bg-card);
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -301,7 +319,7 @@
 
     .tabs-header {
       display: flex;
-      background: rgba(226, 232, 240, 0.8);
+      background: var(--bg-tabs-header);
       border-bottom: 1px solid var(--border-card);
     }
 
@@ -411,14 +429,14 @@
     }
 
     .timeline-body {
-      color: var(--text-muted);
+      color: var(--text-main);
       line-height: 1.4;
       white-space: pre-wrap;
       max-height: 120px;
       overflow-y: auto;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.7rem;
-      background: rgba(0,0,0,0.2);
+      background: var(--bg-input);
       padding: 0.5rem;
       border-radius: 4px;
       margin-top: 0.5rem;
@@ -477,7 +495,7 @@
       font-size: 2rem;
       font-weight: 800;
       letter-spacing: -0.025em;
-      background: linear-gradient(135deg, #1e293b, #4f46e5);
+      background: linear-gradient(135deg, var(--text-main), var(--primary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 0.5rem;
@@ -495,7 +513,7 @@
     .a2ui-text-h3 {
       font-size: 1.05rem;
       font-weight: 600;
-      color: #cbd5e1;
+      color: var(--text-main);
     }
 
     .a2ui-text-body {
@@ -506,7 +524,7 @@
 
     .a2ui-text-caption {
       font-size: 0.7rem;
-      color: #64748b;
+      color: var(--text-muted);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -556,7 +574,7 @@
     }
 
     .shimmer {
-      background: linear-gradient(90deg, rgba(0, 0, 0, 0.03) 25%, rgba(0, 0, 0, 0.08) 50%, rgba(0, 0, 0, 0.03) 75%);
+      background: linear-gradient(90deg, var(--bg-dark) 25%, var(--border-card) 50%, var(--bg-dark) 75%);
       background-size: 200% 100%;
       animation: shimmer-pulse 1.5s infinite;
       border-radius: 8px;
@@ -711,6 +729,9 @@
       <span class="brand-title">A2UI Data Canvas Studio</span>
     </div>
     <div class="status-container">
+      <button class="btn" id="themeToggleBtn" style="padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 20px; box-shadow: none; border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="toggleTheme()">
+        🌙 Dark Mode
+      </button>
       <span class="badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #34d399;">
         ● SQLite MCP Connected
       </span>
@@ -722,8 +743,8 @@
     <!-- Left Panel: Controls & SQLite Table Editor -->
     <div class="left-sidebar">
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <h3 class="section-title">Prompt Yêu cầu</h3>
-        <textarea id="promptInput" placeholder="Nhập truy vấn hiển thị dữ liệu...">So sánh doanh số Q4 giữa khu vực Bắc (North) và Nam (South).</textarea>
+        <h3 class="section-title">Prompt Request</h3>
+        <textarea id="promptInput" placeholder="Enter layout generation query...">Compare Q4 revenue between North and South regions.</textarea>
         <button id="generateBtn" class="btn" onclick="triggerGeneration()">
           <span>🎨 Generate Canvas</span>
         </button>
@@ -731,24 +752,24 @@
 
       <!-- Presets -->
       <div>
-        <h3 class="section-title" style="margin-bottom: 0.5rem;">Mẫu Truy Vấn</h3>
+        <h3 class="section-title" style="margin-bottom: 0.5rem;">Sample Queries</h3>
         <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem;">
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt('So sánh doanh số Q4 giữa khu vực Bắc (North) và Nam (South).')">
-              👉 So sánh Bắc & Nam Q4
+                    onclick="setPrompt('Compare Q4 revenue between North and South regions.')">
+              👉 Compare North & South Q4
             </button>
           </li>
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt('Hiển thị tổng doanh thu theo từng danh mục sản phẩm (Electronics, Furniture, Software) trong cả Q3 và Q4.')">
-              👉 Tổng doanh thu theo danh mục
+                    onclick="setPrompt('Show total revenue by product category (Electronics, Furniture, Software) across Q3 and Q4.')">
+              👉 Total Revenue by Category
             </button>
           </li>
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt('Tìm nhân viên bán hàng có kích thước thương vụ trung bình (avg_deal_size) lớn nhất và hiển thị chi tiết doanh số của họ.')">
-              👉 Nhân viên bán hàng hàng đầu
+                    onclick="setPrompt('Find the sales rep with the highest average deal size and display their sales details.')">
+              👉 Top Sales Representative
             </button>
           </li>
         </ul>
@@ -760,10 +781,10 @@
           <h3 class="section-title">SQLite Live Data Editor</h3>
           <div style="display: flex; gap: 0.5rem;">
             <button class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;" onclick="loadDbData(this)">🔄 Load</button>
-            <button class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; background: var(--success);" onclick="alert('Hệ thống tự động lưu khi bạn sửa số liệu! Hãy nhấn Generate Canvas để xem cập nhật.')">💾 Save</button>
+            <button class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; background: var(--success);" onclick="alert('Values auto-save as you edit! Click Generate Canvas to rebuild the UI.')">💾 Save</button>
           </div>
         </div>
-        <p style="font-size: 0.75rem; color: var(--text-muted);">Sửa trực tiếp các ô số liệu (tự động lưu). Sau đó nhấn <strong>Generate Canvas</strong> để cập nhật UI.</p>
+        <p style="font-size: 0.75rem; color: var(--text-muted);">Edit values directly in the cells (auto-saves). Then click <strong>Generate Canvas</strong> to update the UI.</p>
         
         <div class="table-container">
           <table id="dbTable">
@@ -778,7 +799,7 @@
             </thead>
             <tbody id="dbTableBody">
               <tr>
-                <td colspan="5" style="text-align: center; color: var(--text-muted);">Đang tải dữ liệu SQLite...</td>
+                <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading SQLite data...</td>
               </tr>
             </tbody>
           </table>
@@ -791,14 +812,14 @@
       <div id="canvasRoot" style="width: 100%; min-height: 100%; display: flex; flex-direction: column;">
         <div class="empty-state">
           <span class="empty-icon">🎨</span>
-          <h3>Workspace Trống</h3>
-          <p>Nhập prompt hoặc chọn một mẫu truy vấn và nhấn Generate để vẽ giao diện Canvas.</p>
+          <h3>Empty Workspace</h3>
+          <p>Enter a prompt or select a sample query, then click Generate to render the Canvas UI.</p>
         </div>
       </div>
       
       <!-- Integrated Dynamic Bar Chart Box -->
       <div class="chart-box" id="chartBox">
-        <div class="chart-title">📊 Biểu đồ Phân tích Doanh thu (Động)</div>
+        <div class="chart-title">📊 Dynamic Revenue Analysis Chart</div>
         <div class="chart-grid" id="chartGrid"></div>
       </div>
     </div>
@@ -821,10 +842,10 @@
             <div class="timeline-dot success"></div>
             <div class="timeline-card">
               <div class="timeline-header">
-                <span>Khởi động Graph Workflow</span>
+                <span>Start Graph Workflow</span>
                 <span class="timeline-node">START</span>
               </div>
-              <div class="timeline-body">Chờ tác nhân chạy truy vấn dữ liệu...</div>
+              <div class="timeline-body">Waiting for the agent to run data queries...</div>
             </div>
           </div>
         </div>
@@ -832,17 +853,17 @@
 
       <!-- Tab: JSON Code -->
       <div id="jsonTab" class="tab-content">
-        <pre id="jsonBlock" style="flex:1; margin: 0; white-space: pre-wrap;">// Nhấp Generate để xem JSON phản hồi từ tác nhân...</pre>
+        <pre id="jsonBlock" style="flex:1; margin: 0; white-space: pre-wrap;">// Click Generate to see the JSON response from the agent...</pre>
       </div>
     </div>
   </div>
 
   <!-- Dialog/Modal helper for A2UI Action Binding -->
-  <div id="actionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.6); backdrop-filter:blur(5px); z-index:100; align-items:center; justify-content:center;">
+  <div id="actionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.5); backdrop-filter:blur(5px); z-index:100; align-items:center; justify-content:center;">
     <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:16px; padding:2rem; width:450px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
-      <h2 style="font-size:1.5rem; margin-bottom:1rem; color:var(--text-main);" id="modalTitle">Hành động kích hoạt</h2>
-      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;" id="modalBody">Nút hành động của A2UI đã truyền tín hiệu thành công!</p>
-      <button class="a2ui-button" onclick="document.getElementById('actionModal').style.display='none'">Đóng</button>
+      <h2 style="font-size:1.5rem; margin-bottom:1rem; color:var(--text-main);" id="modalTitle">Action Triggered</h2>
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;" id="modalBody">The A2UI action button has successfully triggered the event callback!</p>
+      <button class="a2ui-button" onclick="document.getElementById('actionModal').style.display='none'">Close</button>
     </div>
   </div>
 
@@ -850,9 +871,40 @@
     let dbRows = [];
     let currentRawJson = null;
 
+    // Theme Toggle implementation
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', targetTheme);
+      
+      const toggleBtn = document.getElementById('themeToggleBtn');
+      if (targetTheme === 'dark') {
+        toggleBtn.innerHTML = '☀️ Light Mode';
+      } else {
+        toggleBtn.innerHTML = '🌙 Dark Mode';
+      }
+      localStorage.setItem('theme', targetTheme);
+    }
+
+    // Set initial theme on page load
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+
     // Load SQLite database data on startup
     window.onload = function() {
       loadDbData();
+      // Initialize toggle button text
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      const toggleBtn = document.getElementById('themeToggleBtn');
+      if (toggleBtn) {
+        if (savedTheme === 'dark') {
+          toggleBtn.innerHTML = '☀️ Light Mode';
+        } else {
+          toggleBtn.innerHTML = '🌙 Dark Mode';
+        }
+      }
     };
 
     function setPrompt(promptText) {
@@ -889,7 +941,7 @@
           tableBody.appendChild(tr);
         });
       } catch (err) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="color:var(--danger); text-align:center;">Lỗi: ${err.message}</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="5" style="color:var(--danger); text-align:center;">Error: ${err.message}</td></tr>`;
       }
     }
 
@@ -918,7 +970,7 @@
         });
         if (!response.ok) throw new Error("Failed to save changes to SQLite database.");
       } catch (err) {
-        alert("Lỗi SQLite: " + err.message);
+        alert("SQLite Error: " + err.message);
       }
     }
 
@@ -953,7 +1005,7 @@
       canvasRoot.innerHTML = ''; // Clear shimmer
 
       if (!uiPayload || !uiPayload.updateComponents || !uiPayload.updateComponents.components) {
-        throw new Error("Dữ liệu cấu trúc UI không hợp lệ hoặc thiếu trường 'updateComponents.components'");
+        throw new Error("Invalid UI structure data or missing 'updateComponents.components' field.");
       }
 
       const components = uiPayload.updateComponents.components;
@@ -966,7 +1018,7 @@
       });
 
       if (!componentMap['root']) {
-        throw new Error("Không tìm thấy thành phần giao diện gốc (root component với id='root')");
+        throw new Error("Root component with id='root' not found in layout.");
       }
 
       // Add icons based on textual context
@@ -1076,7 +1128,7 @@
               if (action.startsWith('drilldown:')) {
                 const region = action.substring('drilldown:'.length);
                 const promptInput = document.getElementById('promptInput');
-                promptInput.value = `Phân tích chi tiết khu vực ${region}`;
+                promptInput.value = `Detailed analysis for region ${region}`;
                 triggerGeneration();
                 return;
               }
@@ -1088,18 +1140,18 @@
                   card.classList.toggle('highlight');
                 });
                 
-                document.getElementById('modalTitle').textContent = "🔍 Chi tiết Đã mở";
-                document.getElementById('modalBody').textContent = "Hệ thống đã highlight toàn bộ thẻ báo cáo dữ liệu trên Canvas!";
+                document.getElementById('modalTitle').textContent = "🔍 Details Opened";
+                document.getElementById('modalBody').textContent = "The system highlighted all report cards on the Canvas!";
               } else {
                 document.getElementById('modalTitle').textContent = "⚡ Action Triggered";
-                document.getElementById('modalBody').textContent = `Tác vụ hành động của Button A2UI: "${action}" đã được kích hoạt thành công!`;
+                document.getElementById('modalBody').textContent = `A2UI Button Action: "${action}" successfully triggered!`;
               }
               document.getElementById('actionModal').style.display = 'flex';
             };
             break;
 
           default:
-            console.warn(`Thành phần loại '${type}' không thuộc Basic Catalog của dự án.`);
+            console.warn(`Component type '${type}' is not part of the basic catalog of the project.`);
             el = document.createElement('div');
             el.className = 'a2ui-text-body';
             el.style.color = 'var(--danger)';
@@ -1123,7 +1175,7 @@
 
       generateBtn.disabled = true;
       showShimmerSkeleton();
-      jsonBlock.textContent = "Chờ phản hồi từ tác nhân...";
+      jsonBlock.textContent = "Waiting for agent response...";
 
       // Setup initial Timeline state
       timeline.innerHTML = `
@@ -1131,10 +1183,10 @@
           <div class="timeline-dot success"></div>
           <div class="timeline-card">
             <div class="timeline-header">
-              <span>Khởi động Graph Workflow</span>
+              <span>Start Graph Workflow</span>
               <span class="timeline-node">START</span>
             </div>
-            <div class="timeline-body">Đang phân tích prompt: "${prompt}"...</div>
+            <div class="timeline-body">Analyzing prompt: "${prompt}"...</div>
           </div>
         </div>
       `;
@@ -1148,7 +1200,7 @@
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.detail || "Không thể gọi tác nhân để tạo canvas.");
+          throw new Error(errorData.detail || "Could not call agent to generate canvas layout.");
         }
 
         const result = await response.json();
@@ -1167,10 +1219,10 @@
             <div class="timeline-dot success"></div>
             <div class="timeline-card">
               <div class="timeline-header">
-                <span>Khởi động Graph Workflow</span>
+                <span>Start Graph Workflow</span>
                 <span class="timeline-node">START</span>
               </div>
-              <div class="timeline-body">Đang phân tích prompt: "${prompt}"...</div>
+              <div class="timeline-body">Analyzing prompt: "${prompt}"...</div>
             </div>
           </div>
         `;
@@ -1182,17 +1234,17 @@
               let body = ev.output || "Completed successfully.";
               
               if (ev.node_name === "Intent_Router") {
-                title = "Phân tích Ngữ nghĩa & Text-to-SQL";
-                body = ev.output === "next" ? "Không có yêu cầu cập nhật, tiếp tục truy xuất." : `Đã chuyển đổi: ${ev.output}`;
+                title = "Semantic Analysis & Text-to-SQL";
+                body = ev.output === "next" ? "No database update requested. Fetching records." : `Translated update SQL statement: ${ev.output}`;
               } else if (ev.node_name === "Data_Fetcher") {
-                title = "Truy xuất / Cập nhật dữ liệu SQLite";
-                body = `Thực thi qua MCP Server.\nSố bản ghi: ${sqlDataCount} hàng.`;
+                title = "Retrieve / Update SQLite Data";
+                body = `Executed via MCP Server.\nData count: ${sqlDataCount} rows fetched.`;
               } else if (ev.node_name === "UI_Generator_Agent") {
-                title = "Sinh & Xác thực giao diện";
-                body = "Đã gửi System prompt chứa A2UI v0.9 Basic Schema.\nĐã hoàn thành sinh và kiểm định qua jsonschema thành công.";
+                title = "Generate & Validate Layout";
+                body = "Sent System prompt containing A2UI v0.9 Basic Schema.\nLayout validated against schema successfully.";
               } else if (ev.node_name === "Critic_Node") {
-                title = "Agentic Reflection (Tự đánh giá)";
-                body = ev.output === "valid" ? "Giao diện hợp lệ. Đã duyệt." : `Yêu cầu sửa lỗi: ${ev.output}`;
+                title = "Agentic Reflection (Critique)";
+                body = ev.output === "valid" ? "Layout is valid. Approved." : `Correction requested: ${ev.output}`;
               }
               
               const isError = ev.output === "error";
@@ -1229,7 +1281,7 @@
           // Group and sum revenue by region
           const regionData = {};
           salesData.forEach(row => {
-            const reg = row.region || 'Khác';
+            const reg = row.region || 'Other';
             const rev = parseFloat(row.revenue) || 0;
             regionData[reg] = (regionData[reg] || 0) + rev;
           });
@@ -1277,7 +1329,7 @@
 
       } catch (err) {
         console.error(err);
-        jsonBlock.textContent = `Lỗi thực thi:\n${err.message}`;
+        jsonBlock.textContent = `Execution Error:\n${err.message}`;
         jsonBlock.style.color = '#ef4444';
 
         timeline.innerHTML += `
@@ -1285,7 +1337,7 @@
             <div class="timeline-dot danger"></div>
             <div class="timeline-card">
               <div class="timeline-header">
-                <span>Lỗi Thực thi Workflow</span>
+                <span>Workflow Execution Error</span>
                 <span class="timeline-node">ERROR</span>
               </div>
               <div class="timeline-body" style="color:var(--danger);">${err.message}</div>
@@ -1296,7 +1348,7 @@
         document.getElementById('canvasRoot').innerHTML = `
           <div class="empty-state" style="color: var(--danger);">
             <span style="font-size: 3rem;">⚠️</span>
-            <h3>Lỗi Tạo Canvas</h3>
+            <h3>Canvas Generation Error</h3>
             <p>${err.message}</p>
           </div>
         `;
