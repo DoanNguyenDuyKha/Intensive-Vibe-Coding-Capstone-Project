@@ -1463,19 +1463,42 @@
         }
 
         if (salesData && Array.isArray(salesData) && salesData.length > 0) {
-          // Group and sum revenue by region or category depending on search context
-          const regionData = {};
+          // Dynamically detect the best grouping column
+          let groupKey = 'region';
+          const sampleRow = salesData[0];
+          const keys = Object.keys(sampleRow);
+          const priorities = ['sales_rep', 'product_category', 'category', 'region', 'month', 'quarter'];
+          for (const p of priorities) {
+            if (keys.includes(p)) {
+              groupKey = p;
+              break;
+            }
+          }
+
+          // Aggregate revenue or units
+          const chartData = {};
+          const isUnits = !keys.includes('revenue') && !keys.includes('total_revenue') && keys.includes('units_sold');
+          
           salesData.forEach(row => {
-            const reg = row.region || 'Other';
-            const rev = parseFloat(row.revenue) || 0;
-            regionData[reg] = (regionData[reg] || 0) + rev;
+            const keyVal = row[groupKey] || 'Other';
+            const val = parseFloat(row.revenue) || parseFloat(row.total_revenue) || parseFloat(row.total) || parseFloat(row.units_sold) || parseFloat(row.avg_deal_size) || 0;
+            chartData[keyVal] = (chartData[keyVal] || 0) + val;
           });
 
-          const regions = Object.keys(regionData);
-          const revenues = Object.values(regionData);
-          const totalRevenue = revenues.reduce((a, b) => a + b, 0);
-          const maxRevenue = Math.max(...revenues, 1);
-          
+          const labels = Object.keys(chartData);
+          const values = Object.values(chartData);
+          const totalValue = values.reduce((a, b) => a + b, 0);
+          const maxValue = Math.max(...values, 1);
+
+          // Value formatter
+          function formatVal(val) {
+            if (isUnits) {
+              return `${val.toLocaleString()} units`;
+            } else {
+              return `$${(val / 1000).toFixed(1)}K`;
+            }
+          }
+
           // Get chart type from Agent response
           const activeChartType = (result.chart_type || 'bar').toLowerCase();
           
@@ -1495,8 +1518,8 @@
             let svgHtml = `<svg viewBox="0 0 42 42" class="chart-svg" style="width: 180px; height: 180px; transform: rotate(-90deg); filter: drop-shadow(0 4px 15px rgba(0,0,0,0.15));">`;
             let accumPct = 0;
             
-            regions.forEach((reg, idx) => {
-              const pct = (regionData[reg] / totalRevenue) * 100;
+            labels.forEach((lbl, idx) => {
+              const pct = (chartData[lbl] / totalValue) * 100;
               const offset = 100 - accumPct;
               const color = colors[idx % colors.length];
               
@@ -1504,7 +1527,7 @@
                 <circle class="donut-segment" cx="21" cy="21" r="15.915" 
                         fill="transparent" stroke="${color}" stroke-width="5" 
                         stroke-dasharray="${pct} ${100 - pct}" stroke-dashoffset="${offset}">
-                  <title>${reg}: $${(regionData[reg] / 1000).toFixed(1)}K (${pct.toFixed(1)}%)</title>
+                  <title>${lbl}: ${formatVal(chartData[lbl])} (${pct.toFixed(1)}%)</title>
                 </circle>`;
               accumPct += pct;
             });
@@ -1512,13 +1535,13 @@
             
             // Render Legend
             let legendHtml = `<div class="chart-legend">`;
-            regions.forEach((reg, idx) => {
+            labels.forEach((lbl, idx) => {
               const color = colors[idx % colors.length];
-              const pct = ((regionData[reg] / totalRevenue) * 100).toFixed(1);
+              const pct = ((chartData[lbl] / totalValue) * 100).toFixed(1);
               legendHtml += `
                 <div class="legend-item">
                   <div class="legend-color" style="background: ${color};"></div>
-                  <span>${reg} (${pct}%)</span>
+                  <span>${lbl} (${pct}%)</span>
                 </div>`;
             });
             legendHtml += `</div>`;
@@ -1536,10 +1559,10 @@
             const height = 150;
             const padding = 20;
 
-            regions.forEach((reg, idx) => {
-              const val = regionData[reg];
-              const x = padding + (idx / Math.max(regions.length - 1, 1)) * (width - 2 * padding);
-              const y = height - padding - (val / maxRevenue) * (height - 2 * padding);
+            labels.forEach((lbl, idx) => {
+              const val = chartData[lbl];
+              const x = padding + (idx / Math.max(labels.length - 1, 1)) * (width - 2 * padding);
+              const y = height - padding - (val / maxValue) * (height - 2 * padding);
               points += `${x},${y} `;
             });
 
@@ -1562,17 +1585,17 @@
             `;
 
             // Draw Data points
-            regions.forEach((reg, idx) => {
-              const val = regionData[reg];
-              const x = padding + (idx / Math.max(regions.length - 1, 1)) * (width - 2 * padding);
-              const y = height - padding - (val / maxRevenue) * (height - 2 * padding);
+            labels.forEach((lbl, idx) => {
+              const val = chartData[lbl];
+              const x = padding + (idx / Math.max(labels.length - 1, 1)) * (width - 2 * padding);
+              const y = height - padding - (val / maxValue) * (height - 2 * padding);
               
               svgHtml += `
                 <circle cx="${x}" cy="${y}" r="6" fill="var(--bg-dark)" stroke="#a855f7" stroke-width="3" style="cursor:pointer;">
-                  <title>${reg}: $${(val / 1000).toFixed(1)}K</title>
+                  <title>${lbl}: ${formatVal(val)}</title>
                 </circle>
-                <text x="${x}" y="${height - 2}" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-weight="600">${reg}</text>
-                <text x="${x}" y="${y - 10}" font-size="9" fill="var(--text-main)" text-anchor="middle" font-weight="700">$${(val / 1000).toFixed(0)}K</text>
+                <text x="${x}" y="${height - 2}" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-weight="600">${lbl}</text>
+                <text x="${x}" y="${y - 10}" font-size="9" fill="var(--text-main)" text-anchor="middle" font-weight="700">${formatVal(val)}</text>
               `;
             });
 
@@ -1582,9 +1605,9 @@
           else {
             // Render Bar Chart (Default)
             chartGrid.style.height = '220px';
-            regions.forEach((reg, idx) => {
-              const rev = regionData[reg];
-              const pct = (rev / maxRevenue) * 100;
+            labels.forEach((lbl, idx) => {
+              const val = chartData[lbl];
+              const pct = (val / maxValue) * 100;
               
               const barContainer = document.createElement('div');
               barContainer.className = 'chart-bar-container';
@@ -1595,12 +1618,12 @@
               
               const tooltip = document.createElement('div');
               tooltip.className = 'chart-bar-tooltip';
-              tooltip.textContent = `$${(rev / 1000).toFixed(1)}K`;
+              tooltip.textContent = formatVal(val);
               bar.appendChild(tooltip);
               
               const label = document.createElement('div');
               label.className = 'chart-label';
-              label.textContent = reg;
+              label.textContent = lbl;
               
               barContainer.appendChild(bar);
               barContainer.appendChild(label);
@@ -1614,9 +1637,17 @@
           }
 
           chartBox.style.display = 'flex';
-          const displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? '📊 Category Distribution Chart (Pie)' : 
-                               activeChartType === 'line' ? '📈 Regional Performance Trend Chart (Line)' : 
-                               '📊 Regional Revenue Comparison Chart (Bar)';
+          let displayTitle = '';
+          const cleanGroupKey = groupKey.replace('_', ' ');
+          if (currentLang === 'vi') {
+            displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Biểu đồ Phân phối (Pie) - Gom nhóm theo: ${cleanGroupKey}` : 
+                           activeChartType === 'line' ? `📈 Biểu đồ Đường Xu hướng (Line) - Gom nhóm theo: ${cleanGroupKey}` : 
+                           `📊 Biểu đồ Cột So sánh (Bar) - Gom nhóm theo: ${cleanGroupKey}`;
+          } else {
+            displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Distribution Chart (Pie) - Grouped by ${cleanGroupKey}` : 
+                           activeChartType === 'line' ? `📈 Trend Performance Chart (Line) - Grouped by ${cleanGroupKey}` : 
+                           `📊 Revenue/Sales Comparison Chart (Bar) - Grouped by ${cleanGroupKey}`;
+          }
           chartBox.querySelector('.chart-title').innerHTML = displayTitle;
         } else {
           chartBox.style.display = 'none';
