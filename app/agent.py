@@ -332,7 +332,15 @@ def data_fetcher_node(ctx: Context) -> str:
     elif prompt:
         from google import genai
         client = genai.Client()
-        sys_prompt = "You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep). Generate a valid SQL SELECT statement to answer the user's request. Return ONLY the raw SQL query, no markdown, no explanation."
+        sys_prompt = """You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep).
+        
+        CRITICAL VALUE MAPPINGS:
+        - Regions in the database are always English: 'North', 'South'. Map 'Bắc'/'Miền Bắc' to 'North', and 'Nam'/'Miền Nam' to 'South'.
+        - Categories in the database are: 'Electronics', 'Furniture', 'Software'. Map 'Điện tử'/'Thiết bị điện tử' to 'Electronics', 'Nội thất' to 'Furniture', 'Phần mềm' to 'Software'.
+        - Quarters in the database are: 'Q3', 'Q4'.
+        - Months in the database are English names: 'July', 'August', 'September', 'October', 'November', 'December'. Map Vietnamese month numbers/names accordingly (e.g. 'Tháng 10' -> 'October', 'Tháng 7' -> 'July').
+        
+        Generate a valid SQL SELECT statement to answer the user's request. Return ONLY the raw SQL query, no markdown, no explanation."""
         resp = generate_content_with_retry(
             client=client,
             model="gemini-2.5-flash",

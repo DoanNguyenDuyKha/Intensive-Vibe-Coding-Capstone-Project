@@ -1201,10 +1201,88 @@
       }
     }
 
+    function translateText(text, targetLang) {
+      if (!text || typeof text !== 'string') return text;
+      
+      let result = text;
+      
+      if (targetLang === 'vi') {
+        const mappings = [
+          ["Executive Summary", "Tóm tắt Báo cáo"],
+          ["Total Revenue", "Tổng Doanh Thu"],
+          ["Total Units Sold", "Tổng Số Lượng Bán"],
+          ["Avg Deal Size", "Giá Trị Đơn Hàng TB"],
+          ["Region", "Khu vực"],
+          ["Quarter", "Quý"],
+          ["Month", "Tháng"],
+          ["Product Category", "Danh mục"],
+          ["Sales Representative", "Nhân viên Bán hàng"],
+          ["Revenue", "Doanh thu"],
+          ["Button", "Xem chi tiết"],
+          ["Details", "Chi tiết"],
+          ["Drill Down", "Xem chi tiết"],
+          ["Drilldown", "Xem chi tiết"],
+          ["Detailed analysis", "Phân tích chi tiết"],
+          ["Comparative Analysis", "Biểu đồ So sánh"],
+          ["Trend Analysis", "Biểu đồ Xu hướng"],
+          ["Distribution Analysis", "Biểu đồ Phân bổ"],
+          ["Top Sales Representative", "Nhân viên Bán hàng Xuất sắc nhất"],
+          ["Sales Performance Summary", "Tóm tắt Hiệu suất Bán hàng"],
+          ["Sales Dashboard", "Bảng Điều khiển Doanh số"],
+          ["Total revenue for Q3 and Q4 reached", "Tổng doanh thu Q3 và Q4 đạt"],
+          ["The North region contributed", "Khu vực phía Bắc đóng góp"],
+          ["The South region contributed", "Khu vực phía Nam đóng góp"],
+          ["contributed", "đóng góp"],
+          ["North region", "Vùng Bắc"],
+          ["South region", "Vùng Nam"],
+          ["region", "vùng"]
+        ];
+        for (const [enWord, viWord] of mappings) {
+          const regex = new RegExp(enWord, 'gi');
+          result = result.replace(regex, viWord);
+        }
+      } else {
+        const mappings = [
+          ["Tóm tắt Báo cáo", "Executive Summary"],
+          ["Tóm tắt Điều hành", "Executive Summary"],
+          ["Tổng Doanh Thu", "Total Revenue"],
+          ["Tổng Số Lượng Bán", "Total Units Sold"],
+          ["Giá Trị Đơn Hàng TB", "Avg Deal Size"],
+          ["Khu vực", "Region"],
+          ["Quý", "Quarter"],
+          ["Tháng", "Month"],
+          ["Danh mục", "Product Category"],
+          ["Nhân viên Bán hàng", "Sales Representative"],
+          ["Doanh thu", "Revenue"],
+          ["Xem chi tiết", "Drill Down"],
+          ["Chi tiết", "Details"],
+          ["Phân tích chi tiết", "Detailed analysis"],
+          ["Biểu đồ So sánh", "Comparative Analysis"],
+          ["Biểu đồ Xu hướng", "Trend Analysis"],
+          ["Biểu đồ Phân bổ", "Distribution Analysis"],
+          ["Nhân viên Bán hàng Xuất sắc nhất", "Top Sales Representative"],
+          ["Tóm tắt Hiệu suất Bán hàng", "Sales Performance Summary"],
+          ["Bảng Điều khiển Doanh số", "Sales Dashboard"],
+          ["Tổng doanh thu Q3 và Q4 đạt", "Total revenue for Q3 and Q4 reached"],
+          ["Khu vực phía Bắc đóng góp", "The North region contributed"],
+          ["Khu vực phía Nam đóng góp", "The South region contributed"],
+          ["đóng góp", "contributed"],
+          ["Vùng Bắc", "North region"],
+          ["Vùng Nam", "South region"]
+        ];
+        for (const [viWord, enWord] of mappings) {
+          const regex = new RegExp(viWord, 'gi');
+          result = result.replace(regex, enWord);
+        }
+      }
+      return result;
+    }
+
     function toggleLanguage() {
       currentLang = currentLang === 'en' ? 'vi' : 'en';
       localStorage.setItem('lang', currentLang);
       updatePageLanguage();
+      
       const promptInput = document.getElementById('promptInput');
       if (promptInput) {
         const val = promptInput.value.trim();
@@ -1215,6 +1293,20 @@
         } else if (val === 'Find the sales rep with the highest average deal size and display their sales details.' || val === 'Tìm nhân viên bán hàng có giá trị đơn hàng trung bình cao nhất và hiển thị chi tiết doanh số.') {
           promptInput.value = currentLang === 'vi' ? 'Tìm nhân viên bán hàng có giá trị đơn hàng trung bình cao nhất và hiển thị chi tiết doanh số.' : 'Find the sales rep with the highest average deal size and display their sales details.';
         }
+      }
+
+      // Live update of existing rendered canvas & chart if present
+      if (currentRawJson) {
+        const uiCopy = JSON.parse(JSON.stringify(currentRawJson.ui));
+        if (uiCopy && uiCopy.updateComponents && uiCopy.updateComponents.components) {
+          uiCopy.updateComponents.components.forEach(comp => {
+            if (comp.text) comp.text = translateText(comp.text, currentLang);
+            if (comp.label) comp.label = translateText(comp.label, currentLang);
+            if (comp.title) comp.title = translateText(comp.title, currentLang);
+          });
+          renderA2uiCanvas(uiCopy);
+        }
+        renderSalesChart(currentRawJson);
       }
     }
 
@@ -1640,6 +1732,289 @@
       }
     }
 
+    function renderSalesChart(result) {
+      const chartBox = document.getElementById('chartBox');
+      const chartGrid = document.getElementById('chartGrid');
+
+      if (salesData && Array.isArray(salesData) && salesData.length > 0) {
+        // Dynamically detect the best grouping column (categorical/text column)
+        let groupKey = null;
+        const sampleRow = salesData[0];
+        const keys = Object.keys(sampleRow);
+        // Pick the first text/categorical column as grouping key
+        const groupPriorities = ['sales_rep', 'product_category', 'category', 'region', 'month', 'quarter'];
+        for (const p of groupPriorities) {
+          if (keys.includes(p)) {
+            groupKey = p;
+            break;
+          }
+        }
+        // If no known grouping column, use the first non-numeric column
+        if (!groupKey) {
+          for (const k of keys) {
+            if (typeof sampleRow[k] === 'string') {
+              groupKey = k;
+              break;
+            }
+          }
+        }
+        if (!groupKey) groupKey = keys[0]; // last resort
+
+        // Dynamically detect the best value column (numeric column)
+        const valuePriorities = ['revenue', 'total_revenue', 'total', 'SUM(revenue)', 'units_sold', 'total_units_sold', 'total_units_q3', 'total_units_q4', 'avg_deal_size', 'count'];
+        let valueKey = null;
+        for (const vp of valuePriorities) {
+          if (keys.includes(vp)) {
+            valueKey = vp;
+            break;
+          }
+        }
+        // If no known value column, use first numeric column that's not the group key
+        if (!valueKey) {
+          for (const k of keys) {
+            if (k !== groupKey && typeof sampleRow[k] === 'number') {
+              valueKey = k;
+              break;
+            }
+          }
+        }
+
+        // Aggregate data by group key
+        const chartData = {};
+        const isUnits = valueKey && (valueKey.includes('units') || valueKey.includes('count'));
+        
+        salesData.forEach(row => {
+          const keyVal = row[groupKey] || 'Other';
+          // Use dynamically detected valueKey, with fallback to known columns
+          let val = 0;
+          if (valueKey && row[valueKey] !== undefined) {
+            val = parseFloat(row[valueKey]) || 0;
+          } else {
+            val = parseFloat(row.revenue) || parseFloat(row.total_revenue) || parseFloat(row.total) || parseFloat(row.units_sold) || parseFloat(row.avg_deal_size) || 0;
+          }
+          chartData[keyVal] = (chartData[keyVal] || 0) + val;
+        });
+
+        const labels = Object.keys(chartData);
+        const values = Object.values(chartData);
+        const totalValue = values.reduce((a, b) => a + b, 0);
+        const maxValue = Math.max(...values, 1);
+
+        // Value formatter with intelligent detection
+        const isCurrency = valueKey && (valueKey.toLowerCase().includes('revenue') || valueKey.toLowerCase().includes('total') || valueKey.toLowerCase().includes('sum'));
+        function formatVal(val) {
+          if (isUnits) {
+            return val >= 1000 ? `${(val / 1000).toFixed(1)}K units` : `${val.toLocaleString()} units`;
+          } else if (isCurrency) {
+            if (val >= 1000000) return `$${(val / 1000000).toFixed(2)}M`;
+            if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
+            return `$${val.toLocaleString()}`;
+          } else {
+            if (val >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
+            if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
+            return val.toLocaleString();
+          }
+        }
+
+        // Get chart type from Agent response
+        let activeChartType = (result.chart_type || 'bar').toLowerCase();
+        
+        // Auto-fallback: If there is only 1 data point, line/pie charts do not make sense and line charts cannot draw any line connection.
+        if (labels && labels.length <= 1) {
+          activeChartType = 'bar';
+        }
+        
+        chartGrid.innerHTML = '';
+        chartGrid.style.flexDirection = 'row';
+        chartGrid.style.alignItems = 'flex-end';
+        chartGrid.style.justifyContent = 'space-around';
+
+        // Premium color palette for charts
+        const barColors = [
+          'linear-gradient(to top, #6366f1, #818cf8)',
+          'linear-gradient(to top, #8b5cf6, #a78bfa)',
+          'linear-gradient(to top, #06b6d4, #22d3ee)',
+          'linear-gradient(to top, #10b981, #34d399)',
+          'linear-gradient(to top, #f59e0b, #fbbf24)',
+          'linear-gradient(to top, #ef4444, #f87171)',
+          'linear-gradient(to top, #ec4899, #f472b6)',
+          'linear-gradient(to top, #14b8a6, #2dd4bf)'
+        ];
+        const solidColors = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6'];
+
+        if (activeChartType === 'pie' || activeChartType === 'donut') {
+          // ===== PREMIUM DONUT CHART =====
+          chartGrid.style.alignItems = 'center';
+          chartGrid.style.flexDirection = 'column';
+          chartGrid.style.minHeight = 'auto';
+          chartGrid.style.padding = '1.5rem';
+
+          let svgHtml = `<div class="donut-center-wrapper">`;
+          svgHtml += `<div class="donut-svg-container">`;
+          svgHtml += `<svg viewBox="0 0 42 42" style="width: 220px; height: 220px; transform: rotate(-90deg); filter: drop-shadow(0 4px 20px rgba(99,102,241,0.2));">`;
+          let accumPct = 0;
+
+          labels.forEach((lbl, idx) => {
+            const pct = (chartData[lbl] / totalValue) * 100;
+            const offset = 100 - accumPct;
+            const color = solidColors[idx % solidColors.length];
+            svgHtml += `<circle class="donut-segment" cx="21" cy="21" r="15.915" fill="transparent" stroke="${color}" stroke-width="5.5" stroke-dasharray="${pct} ${100 - pct}" stroke-dashoffset="${offset}" stroke-linecap="round"><title>${lbl}: ${formatVal(chartData[lbl])} (${pct.toFixed(1)}%)</title></circle>`;
+            accumPct += pct;
+          });
+          svgHtml += `</svg>`;
+          svgHtml += `<div class="donut-center-label"><div class="donut-center-value">${formatVal(totalValue)}</div><div class="donut-center-sub">${currentLang === 'vi' ? 'Tổng cộng' : 'Total'}</div></div>`;
+          svgHtml += `</div>`; // end donut-svg-container
+
+          // Legend with values
+          svgHtml += `<div class="chart-legend" style="flex-direction: column; align-items: flex-start;">`;
+          labels.forEach((lbl, idx) => {
+            const color = solidColors[idx % solidColors.length];
+            const pct = ((chartData[lbl] / totalValue) * 100).toFixed(1);
+            svgHtml += `<div class="legend-item"><div class="legend-color" style="background: ${color};"></div><span><strong>${lbl}</strong> — ${formatVal(chartData[lbl])} (${pct}%)</span></div>`;
+          });
+          svgHtml += `</div></div>`;
+          chartGrid.innerHTML = svgHtml;
+        }
+        else if (activeChartType === 'line') {
+          // ===== PREMIUM LINE CHART WITH AREA FILL =====
+          chartGrid.style.alignItems = 'stretch';
+          chartGrid.style.flexDirection = 'column';
+          chartGrid.style.minHeight = 'auto';
+          chartGrid.style.padding = '1rem 0.5rem';
+
+          const width = 600;
+          const height = 280;
+          const padL = 60, padR = 30, padT = 40, padB = 50;
+          const chartW = width - padL - padR;
+          const chartH = height - padT - padB;
+
+          // Calculate nice grid values
+          const gridLines = 4;
+          let svgHtml = `<div class="line-chart-container"><svg viewBox="0 0 ${width} ${height}" class="chart-svg" style="width: 100%; height: ${height}px;">`;
+
+          // Defs: gradient fill for area
+          svgHtml += `<defs>
+            <linearGradient id="lineGradStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+            <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/><stop offset="100%" stop-color="#6366f1" stop-opacity="0.02"/>
+            </linearGradient>
+            <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>`;
+
+          // Horizontal grid lines + Y-axis labels
+          for (let i = 0; i <= gridLines; i++) {
+            const y = padT + (i / gridLines) * chartH;
+            const val = maxValue - (i / gridLines) * maxValue;
+            svgHtml += `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" stroke="var(--border-card)" stroke-width="1" ${i > 0 && i < gridLines ? 'stroke-dasharray="6 4"' : ''}/>`;
+            svgHtml += `<text x="${padL - 8}" y="${y + 4}" font-size="10" fill="var(--text-muted)" text-anchor="end" font-weight="500" font-family="Inter, sans-serif">${formatVal(val)}</text>`;
+          }
+
+          // Build points array
+          const pts = labels.map((lbl, idx) => {
+            const x = padL + (idx / Math.max(labels.length - 1, 1)) * chartW;
+            const y = padT + (1 - chartData[lbl] / maxValue) * chartH;
+            return { x, y, lbl, val: chartData[lbl] };
+          });
+
+          // Area fill polygon
+          const areaPoints = pts.map(p => `${p.x},${p.y}`).join(' ');
+          svgHtml += `<polygon points="${padL},${padT + chartH} ${areaPoints} ${pts[pts.length - 1].x},${padT + chartH}" fill="url(#areaFill)"/>`;
+
+          // Smooth line
+          svgHtml += `<polyline fill="none" stroke="url(#lineGradStroke)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" points="${areaPoints}" filter="url(#glow)"/>`;
+
+          // Data points + labels
+          pts.forEach((p, idx) => {
+            svgHtml += `<circle cx="${p.x}" cy="${p.y}" r="7" fill="var(--bg-card)" stroke="${solidColors[idx % solidColors.length]}" stroke-width="3" style="cursor:pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><title>${p.lbl}: ${formatVal(p.val)}</title></circle>`;
+            svgHtml += `<text x="${p.x}" y="${p.y - 14}" font-size="11" fill="var(--text-main)" text-anchor="middle" font-weight="700" font-family="Inter, sans-serif">${formatVal(p.val)}</text>`;
+            svgHtml += `<text x="${p.x}" y="${padT + chartH + 18}" font-size="11" fill="var(--text-muted)" text-anchor="middle" font-weight="600" font-family="Inter, sans-serif">${p.lbl}</text>`;
+          });
+
+          svgHtml += `</svg></div>`;
+          chartGrid.innerHTML = svgHtml;
+        }
+        else {
+          // ===== PREMIUM BAR CHART =====
+          chartGrid.style.minHeight = '280px';
+          chartGrid.style.borderBottom = 'none';
+          chartGrid.style.position = 'relative';
+
+          // Add subtle grid lines behind bars
+          const gridOverlay = document.createElement('div');
+          gridOverlay.style.cssText = 'position:absolute; top:2.5rem; left:0; right:0; bottom:3rem; display:flex; flex-direction:column; justify-content:space-between; pointer-events:none; z-index:0;';
+          for (let g = 0; g < 4; g++) {
+            const line = document.createElement('div');
+            line.style.cssText = 'width:100%; height:1px; background:var(--border-card); opacity:0.5;';
+            if (g > 0) line.style.borderTop = '1px dashed var(--border-card)';
+            gridOverlay.appendChild(line);
+          }
+          chartGrid.appendChild(gridOverlay);
+
+          labels.forEach((lbl, idx) => {
+            const val = chartData[lbl];
+            const pct = (val / maxValue) * 100;
+
+            const barContainer = document.createElement('div');
+            barContainer.className = 'chart-bar-container';
+            barContainer.style.position = 'relative';
+            barContainer.style.zIndex = '1';
+            barContainer.style.animation = `fadeInUp 0.5s ease ${idx * 0.1}s both`;
+
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar';
+            bar.style.background = barColors[idx % barColors.length];
+            bar.style.height = '0%';
+            bar.style.boxShadow = `0 4px 20px ${solidColors[idx % solidColors.length]}40`;
+            bar.style.transformOrigin = 'bottom';
+
+            // Always-visible value label above bar
+            const valueLabel = document.createElement('div');
+            valueLabel.className = 'chart-bar-value';
+            valueLabel.textContent = formatVal(val);
+            bar.appendChild(valueLabel);
+
+            // Hover tooltip with percentage
+            const tooltip = document.createElement('div');
+            tooltip.className = 'chart-bar-tooltip';
+            const pctOfTotal = ((val / totalValue) * 100).toFixed(1);
+            tooltip.textContent = `${pctOfTotal}% ${currentLang === 'vi' ? 'tổng' : 'of total'}`;
+            bar.appendChild(tooltip);
+
+            const label = document.createElement('div');
+            label.className = 'chart-label';
+            label.textContent = lbl;
+
+            barContainer.appendChild(bar);
+            barContainer.appendChild(label);
+            chartGrid.appendChild(barContainer);
+
+            // Animate bar growth with spring effect
+            setTimeout(() => { bar.style.height = `${pct}%`; }, 150 + idx * 120);
+          });
+        }
+
+        chartBox.style.display = 'flex';
+        const cleanGroupKey = groupKey.replace(/_/g, ' ');
+        const valueLabel = valueKey ? valueKey.replace(/_/g, ' ') : '';
+        let displayTitle = '';
+        if (currentLang === 'vi') {
+          displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Biểu đồ Tỉ lệ Phân bổ — theo ${cleanGroupKey}` :
+                         activeChartType === 'line' ? `📈 Biểu đồ Xu hướng — theo ${cleanGroupKey}` :
+                         `📊 Biểu đồ So sánh — theo ${cleanGroupKey}`;
+        } else {
+          displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Distribution Analysis — by ${cleanGroupKey}` :
+                         activeChartType === 'line' ? `📈 Trend Analysis — by ${cleanGroupKey}` :
+                         `📊 Comparative Analysis — by ${cleanGroupKey}`;
+        }
+        if (valueLabel) displayTitle += ` <span style="font-size:0.8rem;color:var(--text-muted);font-weight:500;"> (${valueLabel})</span>`;
+        chartBox.querySelector('.chart-title').innerHTML = displayTitle;
+      } else {
+        chartBox.style.display = 'none';
+      }
+    }
+
     async function triggerGeneration() {
       const prompt = document.getElementById('promptInput').value;
       const generateBtn = document.getElementById('generateBtn');
@@ -1779,286 +2154,7 @@
         renderA2uiCanvas(result.ui);
 
         // Aggregate and Render Interactive Chart from result.data
-        const chartBox = document.getElementById('chartBox');
-        const chartGrid = document.getElementById('chartGrid');
-
-        if (salesData && Array.isArray(salesData) && salesData.length > 0) {
-          // Dynamically detect the best grouping column (categorical/text column)
-          let groupKey = null;
-          const sampleRow = salesData[0];
-          const keys = Object.keys(sampleRow);
-          // Pick the first text/categorical column as grouping key
-          const groupPriorities = ['sales_rep', 'product_category', 'category', 'region', 'month', 'quarter'];
-          for (const p of groupPriorities) {
-            if (keys.includes(p)) {
-              groupKey = p;
-              break;
-            }
-          }
-          // If no known grouping column, use the first non-numeric column
-          if (!groupKey) {
-            for (const k of keys) {
-              if (typeof sampleRow[k] === 'string') {
-                groupKey = k;
-                break;
-              }
-            }
-          }
-          if (!groupKey) groupKey = keys[0]; // last resort
-
-          // Dynamically detect the best value column (numeric column)
-          const valuePriorities = ['revenue', 'total_revenue', 'total', 'SUM(revenue)', 'units_sold', 'total_units_sold', 'total_units_q3', 'total_units_q4', 'avg_deal_size', 'count'];
-          let valueKey = null;
-          for (const vp of valuePriorities) {
-            if (keys.includes(vp)) {
-              valueKey = vp;
-              break;
-            }
-          }
-          // If no known value column, use first numeric column that's not the group key
-          if (!valueKey) {
-            for (const k of keys) {
-              if (k !== groupKey && typeof sampleRow[k] === 'number') {
-                valueKey = k;
-                break;
-              }
-            }
-          }
-
-          // Aggregate data by group key
-          const chartData = {};
-          const isUnits = valueKey && (valueKey.includes('units') || valueKey.includes('count'));
-          
-          salesData.forEach(row => {
-            const keyVal = row[groupKey] || 'Other';
-            // Use dynamically detected valueKey, with fallback to known columns
-            let val = 0;
-            if (valueKey && row[valueKey] !== undefined) {
-              val = parseFloat(row[valueKey]) || 0;
-            } else {
-              val = parseFloat(row.revenue) || parseFloat(row.total_revenue) || parseFloat(row.total) || parseFloat(row.units_sold) || parseFloat(row.avg_deal_size) || 0;
-            }
-            chartData[keyVal] = (chartData[keyVal] || 0) + val;
-          });
-
-          const labels = Object.keys(chartData);
-          const values = Object.values(chartData);
-          const totalValue = values.reduce((a, b) => a + b, 0);
-          const maxValue = Math.max(...values, 1);
-
-          // Value formatter with intelligent detection
-          const isCurrency = valueKey && (valueKey.toLowerCase().includes('revenue') || valueKey.toLowerCase().includes('total') || valueKey.toLowerCase().includes('sum'));
-          function formatVal(val) {
-            if (isUnits) {
-              return val >= 1000 ? `${(val / 1000).toFixed(1)}K units` : `${val.toLocaleString()} units`;
-            } else if (isCurrency) {
-              if (val >= 1000000) return `$${(val / 1000000).toFixed(2)}M`;
-              if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
-              return `$${val.toLocaleString()}`;
-            } else {
-              if (val >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
-              if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
-              return val.toLocaleString();
-            }
-          }
-
-          // Get chart type from Agent response
-          let activeChartType = (result.chart_type || 'bar').toLowerCase();
-          
-          // Auto-fallback: If there is only 1 data point, line/pie charts do not make sense and line charts cannot draw any line connection.
-          if (labels && labels.length <= 1) {
-            activeChartType = 'bar';
-          }
-          
-          chartGrid.innerHTML = '';
-          chartGrid.style.flexDirection = 'row';
-          chartGrid.style.alignItems = 'flex-end';
-          chartGrid.style.justifyContent = 'space-around';
-
-          // Premium color palette for charts
-          const barColors = [
-            'linear-gradient(to top, #6366f1, #818cf8)',
-            'linear-gradient(to top, #8b5cf6, #a78bfa)',
-            'linear-gradient(to top, #06b6d4, #22d3ee)',
-            'linear-gradient(to top, #10b981, #34d399)',
-            'linear-gradient(to top, #f59e0b, #fbbf24)',
-            'linear-gradient(to top, #ef4444, #f87171)',
-            'linear-gradient(to top, #ec4899, #f472b6)',
-            'linear-gradient(to top, #14b8a6, #2dd4bf)'
-          ];
-          const solidColors = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6'];
-
-          if (activeChartType === 'pie' || activeChartType === 'donut') {
-            // ===== PREMIUM DONUT CHART =====
-            chartGrid.style.alignItems = 'center';
-            chartGrid.style.flexDirection = 'column';
-            chartGrid.style.minHeight = 'auto';
-            chartGrid.style.padding = '1.5rem';
-
-            let svgHtml = `<div class="donut-center-wrapper">`;
-            svgHtml += `<div class="donut-svg-container">`;
-            svgHtml += `<svg viewBox="0 0 42 42" style="width: 220px; height: 220px; transform: rotate(-90deg); filter: drop-shadow(0 4px 20px rgba(99,102,241,0.2));">`;
-            let accumPct = 0;
-
-            labels.forEach((lbl, idx) => {
-              const pct = (chartData[lbl] / totalValue) * 100;
-              const offset = 100 - accumPct;
-              const color = solidColors[idx % solidColors.length];
-              svgHtml += `<circle class="donut-segment" cx="21" cy="21" r="15.915" fill="transparent" stroke="${color}" stroke-width="5.5" stroke-dasharray="${pct} ${100 - pct}" stroke-dashoffset="${offset}" stroke-linecap="round"><title>${lbl}: ${formatVal(chartData[lbl])} (${pct.toFixed(1)}%)</title></circle>`;
-              accumPct += pct;
-            });
-            svgHtml += `</svg>`;
-            svgHtml += `<div class="donut-center-label"><div class="donut-center-value">${formatVal(totalValue)}</div><div class="donut-center-sub">${currentLang === 'vi' ? 'Tổng cộng' : 'Total'}</div></div>`;
-            svgHtml += `</div>`; // end donut-svg-container
-
-            // Legend with values
-            svgHtml += `<div class="chart-legend" style="flex-direction: column; align-items: flex-start;">`;
-            labels.forEach((lbl, idx) => {
-              const color = solidColors[idx % solidColors.length];
-              const pct = ((chartData[lbl] / totalValue) * 100).toFixed(1);
-              svgHtml += `<div class="legend-item"><div class="legend-color" style="background: ${color};"></div><span><strong>${lbl}</strong> — ${formatVal(chartData[lbl])} (${pct}%)</span></div>`;
-            });
-            svgHtml += `</div></div>`;
-            chartGrid.innerHTML = svgHtml;
-          }
-          else if (activeChartType === 'line') {
-            // ===== PREMIUM LINE CHART WITH AREA FILL =====
-            chartGrid.style.alignItems = 'stretch';
-            chartGrid.style.flexDirection = 'column';
-            chartGrid.style.minHeight = 'auto';
-            chartGrid.style.padding = '1rem 0.5rem';
-
-            const width = 600;
-            const height = 280;
-            const padL = 60, padR = 30, padT = 40, padB = 50;
-            const chartW = width - padL - padR;
-            const chartH = height - padT - padB;
-
-            // Calculate nice grid values
-            const gridLines = 4;
-            let svgHtml = `<div class="line-chart-container"><svg viewBox="0 0 ${width} ${height}" class="chart-svg" style="width: 100%; height: ${height}px;">`;
-
-            // Defs: gradient fill for area
-            svgHtml += `<defs>
-              <linearGradient id="lineGradStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/>
-              </linearGradient>
-              <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/><stop offset="100%" stop-color="#6366f1" stop-opacity="0.02"/>
-              </linearGradient>
-              <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            </defs>`;
-
-            // Horizontal grid lines + Y-axis labels
-            for (let i = 0; i <= gridLines; i++) {
-              const y = padT + (i / gridLines) * chartH;
-              const val = maxValue - (i / gridLines) * maxValue;
-              svgHtml += `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" stroke="var(--border-card)" stroke-width="1" ${i > 0 && i < gridLines ? 'stroke-dasharray="6 4"' : ''}/>`;
-              svgHtml += `<text x="${padL - 8}" y="${y + 4}" font-size="10" fill="var(--text-muted)" text-anchor="end" font-weight="500" font-family="Inter, sans-serif">${formatVal(val)}</text>`;
-            }
-
-            // Build points array
-            const pts = labels.map((lbl, idx) => {
-              const x = padL + (idx / Math.max(labels.length - 1, 1)) * chartW;
-              const y = padT + (1 - chartData[lbl] / maxValue) * chartH;
-              return { x, y, lbl, val: chartData[lbl] };
-            });
-
-            // Area fill polygon
-            const areaPoints = pts.map(p => `${p.x},${p.y}`).join(' ');
-            svgHtml += `<polygon points="${padL},${padT + chartH} ${areaPoints} ${pts[pts.length - 1].x},${padT + chartH}" fill="url(#areaFill)"/>`;
-
-            // Smooth line
-            svgHtml += `<polyline fill="none" stroke="url(#lineGradStroke)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" points="${areaPoints}" filter="url(#glow)"/>`;
-
-            // Data points + labels
-            pts.forEach((p, idx) => {
-              svgHtml += `<circle cx="${p.x}" cy="${p.y}" r="7" fill="var(--bg-card)" stroke="${solidColors[idx % solidColors.length]}" stroke-width="3" style="cursor:pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><title>${p.lbl}: ${formatVal(p.val)}</title></circle>`;
-              svgHtml += `<text x="${p.x}" y="${p.y - 14}" font-size="11" fill="var(--text-main)" text-anchor="middle" font-weight="700" font-family="Inter, sans-serif">${formatVal(p.val)}</text>`;
-              svgHtml += `<text x="${p.x}" y="${padT + chartH + 18}" font-size="11" fill="var(--text-muted)" text-anchor="middle" font-weight="600" font-family="Inter, sans-serif">${p.lbl}</text>`;
-            });
-
-            svgHtml += `</svg></div>`;
-            chartGrid.innerHTML = svgHtml;
-          }
-          else {
-            // ===== PREMIUM BAR CHART =====
-            chartGrid.style.minHeight = '280px';
-            chartGrid.style.borderBottom = 'none';
-            chartGrid.style.position = 'relative';
-
-            // Add subtle grid lines behind bars
-            const gridOverlay = document.createElement('div');
-            gridOverlay.style.cssText = 'position:absolute; top:2.5rem; left:0; right:0; bottom:3rem; display:flex; flex-direction:column; justify-content:space-between; pointer-events:none; z-index:0;';
-            for (let g = 0; g < 4; g++) {
-              const line = document.createElement('div');
-              line.style.cssText = 'width:100%; height:1px; background:var(--border-card); opacity:0.5;';
-              if (g > 0) line.style.borderTop = '1px dashed var(--border-card)';
-              gridOverlay.appendChild(line);
-            }
-            chartGrid.appendChild(gridOverlay);
-
-            labels.forEach((lbl, idx) => {
-              const val = chartData[lbl];
-              const pct = (val / maxValue) * 100;
-
-              const barContainer = document.createElement('div');
-              barContainer.className = 'chart-bar-container';
-              barContainer.style.position = 'relative';
-              barContainer.style.zIndex = '1';
-              barContainer.style.animation = `fadeInUp 0.5s ease ${idx * 0.1}s both`;
-
-              const bar = document.createElement('div');
-              bar.className = 'chart-bar';
-              bar.style.background = barColors[idx % barColors.length];
-              bar.style.height = '0%';
-              bar.style.boxShadow = `0 4px 20px ${solidColors[idx % solidColors.length]}40`;
-              bar.style.transformOrigin = 'bottom';
-
-              // Always-visible value label above bar
-              const valueLabel = document.createElement('div');
-              valueLabel.className = 'chart-bar-value';
-              valueLabel.textContent = formatVal(val);
-              bar.appendChild(valueLabel);
-
-              // Hover tooltip with percentage
-              const tooltip = document.createElement('div');
-              tooltip.className = 'chart-bar-tooltip';
-              const pctOfTotal = ((val / totalValue) * 100).toFixed(1);
-              tooltip.textContent = `${pctOfTotal}% ${currentLang === 'vi' ? 'tổng' : 'of total'}`;
-              bar.appendChild(tooltip);
-
-              const label = document.createElement('div');
-              label.className = 'chart-label';
-              label.textContent = lbl;
-
-              barContainer.appendChild(bar);
-              barContainer.appendChild(label);
-              chartGrid.appendChild(barContainer);
-
-              // Animate bar growth with spring effect
-              setTimeout(() => { bar.style.height = `${pct}%`; }, 150 + idx * 120);
-            });
-          }
-
-          chartBox.style.display = 'flex';
-          const cleanGroupKey = groupKey.replace(/_/g, ' ');
-          const valueLabel = valueKey ? valueKey.replace(/_/g, ' ') : '';
-          let displayTitle = '';
-          if (currentLang === 'vi') {
-            displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Biểu đồ Tỉ lệ Phân bổ — theo ${cleanGroupKey}` :
-                           activeChartType === 'line' ? `📈 Biểu đồ Xu hướng — theo ${cleanGroupKey}` :
-                           `📊 Biểu đồ So sánh — theo ${cleanGroupKey}`;
-          } else {
-            displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Distribution Analysis — by ${cleanGroupKey}` :
-                           activeChartType === 'line' ? `📈 Trend Analysis — by ${cleanGroupKey}` :
-                           `📊 Comparative Analysis — by ${cleanGroupKey}`;
-          }
-          if (valueLabel) displayTitle += ` <span style="font-size:0.8rem;color:var(--text-muted);font-weight:500;"> (${valueLabel})</span>`;
-          chartBox.querySelector('.chart-title').innerHTML = displayTitle;
-        } else {
-          chartBox.style.display = 'none';
-        }
+        renderSalesChart(result);
 
       } catch (err) {
         console.error(err);
