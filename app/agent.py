@@ -200,19 +200,45 @@ def validate_hybrid_output(output_str: str, validator: A2uiValidator, raw_data_f
 def generate_content_with_retry(client, model, contents, config=None, max_attempts=3, delay=3.0):
     import time
     last_error = None
-    for attempt in range(max_attempts):
-        try:
-            if config:
-                return client.models.generate_content(model=model, contents=contents, config=config)
-            else:
-                return client.models.generate_content(model=model, contents=contents)
-        except Exception as e:
-            last_error = e
-            is_transient = any(term in str(e).upper() for term in ["503", "429", "UNAVAILABLE", "EXHAUSTED"])
-            if is_transient and attempt < max_attempts - 1:
-                time.sleep(delay)
-            else:
-                raise e
+    
+    # Fallback chain of models to handle daily free tier quota exhaustions
+    model_fallback_chain = [
+        "gemini-2.5-flash",
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-latest"
+    ]
+    
+    # Put the requested model at the front of the chain
+    if model not in model_fallback_chain:
+        model_fallback_chain.insert(0, model)
+    else:
+        model_fallback_chain.remove(model)
+        model_fallback_chain.insert(0, model)
+        
+    for current_model in model_fallback_chain:
+        for attempt in range(max_attempts):
+            try:
+                if config:
+                    return client.models.generate_content(model=current_model, contents=contents, config=config)
+                else:
+                    return client.models.generate_content(model=current_model, contents=contents)
+            except Exception as e:
+                last_error = e
+                err_str = str(e).upper()
+                is_quota_error = any(term in err_str for term in ["429", "RESOURCE_EXHAUSTED", "QUOTA"])
+                is_transient = any(term in err_str for term in ["503", "UNAVAILABLE"])
+                
+                if is_quota_error:
+                    print(f">>> QUOTA EXHAUSTED for {current_model}. Trying next fallback model...", flush=True)
+                    break # Break out of attempt loop to try next model in chain
+                
+                if is_transient and attempt < max_attempts - 1:
+                    time.sleep(delay)
+                else:
+                    if not is_transient and not is_quota_error:
+                        raise e
+                        
     if last_error:
         raise last_error
 
