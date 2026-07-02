@@ -439,26 +439,29 @@ def ui_generator_node(ctx: Context) -> dict:
             
         except Exception as e:
             last_error = e
-            # Sleep to wait out transient 503 UNAVAILABLE or 429 RESOURCE_EXHAUSTED errors
             import time
-            if any(term in str(e).upper() for term in ["503", "429", "UNAVAILABLE", "EXHAUSTED"]):
-                time.sleep(2.5)
-            # Re-prompt the model with the exact validation error to let it self-correct
-            current_prompt = f"""
-            Your previous response failed validation with the following error:
-            {str(e)}
-            
-            Please correct the JSON and return the full corrected JSON object.
-            Remember:
-            1. The version MUST be "v0.9".
-            2. Do not use raw HTML, CSS, or JS.
-            3. Only use Basic Catalog components: Column, Row, Text, Button, Card.
-            4. The root component in components must have id "root".
-            5. Return raw JSON only, no markdown wrapping, no explanation.
-            
-            Previous invalid attempt:
-            {text}
-            """
+            # Sleep to wait out transient 503 UNAVAILABLE or 429 RESOURCE_EXHAUSTED errors
+            is_transient = any(term in str(e).upper() for term in ["503", "429", "UNAVAILABLE", "EXHAUSTED"])
+            if is_transient:
+                time.sleep(3.0)
+                # Keep prompt unchanged for transient network errors to perform a clean retry
+            else:
+                # Re-prompt the model with the exact validation error to let it self-correct
+                current_prompt = f"""
+                Your previous response failed validation with the following error:
+                {str(e)}
+                
+                Please correct the JSON and return the full corrected JSON object.
+                Remember:
+                1. The version MUST be "v0.9".
+                2. Do not use raw HTML, CSS, or JS.
+                3. Only use Basic Catalog components: Column, Row, Text, Button, Card.
+                4. The root component in components must have id "root".
+                5. Return raw JSON only, no markdown wrapping, no explanation.
+                
+                Previous invalid attempt:
+                {text}
+                """
 
     raise ValueError(f"Failed to generate valid Hybrid Output after {attempts} attempts. Last error: {last_error}")
 
