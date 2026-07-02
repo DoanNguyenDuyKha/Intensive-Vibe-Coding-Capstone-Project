@@ -1199,15 +1199,16 @@
 
       // Add icons based on textual context
       function enrichText(text) {
-        if (!text) return '';
-        let enriched = text;
-        if (text.includes("revenue") || text.includes("doanh thu") || text.includes("$")) {
+        if (text === null || text === undefined) return '';
+        const textStr = String(text);
+        let enriched = textStr;
+        if (textStr.includes("revenue") || textStr.includes("doanh thu") || textStr.includes("$")) {
           enriched = "💵 " + enriched;
-        } else if (text.includes("rep") || text.includes("nhân viên") || text.includes("salesperson")) {
+        } else if (textStr.includes("rep") || textStr.includes("nhân viên") || textStr.includes("salesperson")) {
           enriched = "👤 " + enriched;
-        } else if (text.includes("region") || text.includes("khu vực") || text.includes("North") || text.includes("South")) {
+        } else if (textStr.includes("region") || textStr.includes("khu vực") || textStr.includes("North") || textStr.includes("South")) {
           enriched = "📍 " + enriched;
-        } else if (text.includes("growth") || text.includes("tăng trưởng") || text.includes("so sánh")) {
+        } else if (textStr.includes("growth") || textStr.includes("tăng trưởng") || textStr.includes("so sánh")) {
           enriched = "📈 " + enriched;
         }
         return enriched;
