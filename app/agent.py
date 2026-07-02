@@ -341,8 +341,35 @@ def ui_generator_node(ctx: Context) -> dict:
     update_msg = ctx.state.get("update_message") if isinstance(ctx.state, dict) else getattr(ctx.state, "update_message", None)
     update_info = f'\n    SYSTEM ACTION STATUS: "{update_msg}"\n    (Please display a clean success notification card or label at the top of the dashboard layout to show the user that their data update was executed successfully.)\n' if update_msg else ""
 
+    language = ctx.state.get("language", "en") if isinstance(ctx.state, dict) else getattr(ctx.state, "language", "en")
+    lang_info = ""
+    if language == "vi":
+        lang_info = """
+        LANGUAGE REQUIREMENT:
+        You MUST generate all UI text, header titles, card labels, descriptions, and executive summaries in VIETNAMESE.
+        For example:
+        - "Q3 & Q4 Sales Dashboard" -> "Báo Cáo Doanh Thu Q3 & Q4" or "Bảng Điều Khiển Doanh Số Q3 & Q4"
+        - "Executive Summary" -> "Tóm Tắt Báo Cáo"
+        - "Total Revenue" -> "Tổng Doanh Thu"
+        - "Total Units Sold" -> "Tổng Số Lượng Bán"
+        - "Avg Deal Size" -> "Giá Trị Đơn Hàng TB"
+        - "Sales Representative" -> "Nhân Viên Kinh Doanh"
+        - "Region" -> "Vùng Miền"
+        - "Quarter" -> "Quý"
+        - "Month" -> "Tháng"
+        - "Product Category" -> "Danh Mục Sản Phẩm"
+        
+        Keep all numbers, currency signs ($ or USD), and raw data fields (like Nguyen Van A, South, etc.) original. Just translate the UI descriptive text, headers, and summaries.
+        """
+    else:
+        lang_info = """
+        LANGUAGE REQUIREMENT:
+        You MUST generate all UI text, titles, labels, and summaries in ENGLISH.
+        """
+
     prompt = f"""
     {instructions}
+    {lang_info}
 
     You MUST create a user interface that directly answers and satisfies the following user request:
     USER REQUEST: "{user_prompt}"

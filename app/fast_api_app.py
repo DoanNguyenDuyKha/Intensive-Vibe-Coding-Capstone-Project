@@ -81,8 +81,10 @@ from pydantic import BaseModel
 from app.agent import sales_canvas_workflow
 
 
+from typing import Optional
 class PromptRequest(BaseModel):
     prompt: str
+    lang: Optional[str] = "en"
 
 
 import sqlite3
@@ -165,6 +167,7 @@ def generate_canvas(request: PromptRequest):
         unique_id = str(uuid.uuid4())
         session_service = InMemorySessionService()
         session = session_service.create_session_sync(user_id=unique_id, app_name="canvas")
+        session.state["language"] = request.lang or "en"
         runner = Runner(agent=sales_canvas_workflow, session_service=session_service, app_name="canvas")
 
         user_message = types.Content(
