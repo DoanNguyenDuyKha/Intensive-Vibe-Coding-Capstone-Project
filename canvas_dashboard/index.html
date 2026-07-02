@@ -1264,7 +1264,15 @@
 
         // Render timeline traces dynamically
         const trace = result.trace || {};
-        const sqlDataCount = trace.sql_data ? JSON.parse(trace.sql_data).length : 0;
+        let sqlDataCount = 0;
+        try {
+          if (trace.sql_data) {
+            const parsedSql = JSON.parse(trace.sql_data);
+            sqlDataCount = parsedSql.row_count !== undefined ? parsedSql.row_count : (parsedSql.data ? parsedSql.data.length : parsedSql.length || 0);
+          }
+        } catch (e) {
+          console.error("Error parsing sql_data trace:", e);
+        }
         
         timeline.innerHTML = `
           <div class="timeline-item">

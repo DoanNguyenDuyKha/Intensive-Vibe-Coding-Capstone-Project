@@ -267,8 +267,14 @@ def data_fetcher_node(ctx: Context) -> str:
         query = "SELECT region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep FROM sales;"
         
     try:
+        print(f">>> DATA FETCHER: executing query: {query}", flush=True)
         result_str = query_sales_data(query)
+        import json
+        parsed_res = json.loads(result_str)
+        if "error" in parsed_res:
+            raise ValueError(parsed_res["error"])
     except Exception as e:
+        print(f">>> DATA FETCHER ERROR: {e!s}. Falling back to full query.", flush=True)
         # Fallback to full data if query fails
         fallback_query = "SELECT region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep FROM sales;"
         result_str = query_sales_data(fallback_query)
