@@ -1023,6 +1023,7 @@
   <script>
     let dbRows = [];
     let currentRawJson = null;
+    let salesData = [];
 
     let currentLang = localStorage.getItem('lang') || 'en';
 
@@ -1295,10 +1296,93 @@
         throw new Error("Root component with id='root' not found in layout.");
       }
 
-      // Add icons based on textual context
+      // Helper to resolve A2UI dynamic string, binding paths, or formatting function calls
+      function resolveDynamicValue(val) {
+        if (val === null || val === undefined) return '';
+        if (typeof val === 'string') {
+          return val;
+        }
+        if (typeof val === 'number' || typeof val === 'boolean') {
+          return String(val);
+        }
+        if (typeof val === 'object') {
+          // 1. Data Binding Path
+          if (val.path) {
+            return resolveJsonPointer(val.path);
+          }
+          // 2. Function Call
+          if (val.call) {
+            return executeClientFunction(val.call, val.args);
+          }
+        }
+        return '';
+      }
+
+      // Helper to resolve JSON Pointer path against the parsed salesData
+      function resolveJsonPointer(pointer) {
+        if (!pointer || pointer === '/') return '';
+        const tokens = pointer.split('/').slice(1).map(t => t.replace(/~1/g, '/').replace(/~0/g, '~'));
+        let current = salesData;
+        
+        for (const token of tokens) {
+          if (current === null || current === undefined) return '';
+          
+          if (Array.isArray(current) && isNaN(parseInt(token))) {
+            if (current.length > 0) {
+              current = current[0][token];
+            } else {
+              return '';
+            }
+          } else {
+            current = current[token];
+          }
+        }
+        return current !== undefined && current !== null ? current : '';
+      }
+
+      // Helper to execute A2UI spec client-side format functions
+      function executeClientFunction(call, args) {
+        args = args || {};
+        switch (call) {
+          case 'formatString': {
+            const rawPattern = resolveDynamicValue(args.value);
+            return rawPattern.replace(/\$\{([^}]+)\}/g, (match, expr) => {
+              if (expr.startsWith('/')) {
+                return resolveJsonPointer(expr);
+              }
+              return '';
+            });
+          }
+          case 'formatCurrency': {
+            const val = parseFloat(resolveDynamicValue(args.value)) || 0;
+            const currency = args.currency || 'USD';
+            if (val >= 1000000) return `$${(val / 1000000).toFixed(2)}M`;
+            if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
+            return `$${val.toLocaleString()}`;
+          }
+          case 'formatNumber': {
+            const val = parseFloat(resolveDynamicValue(args.value)) || 0;
+            const decimals = args.decimals !== undefined ? parseInt(resolveDynamicValue(args.decimals)) : 2;
+            if (val >= 1000000) return `${(val / 1000000).toFixed(decimals)}M`;
+            if (val >= 1000) return `${(val / 1000).toFixed(decimals)}K`;
+            return val.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+          }
+          case 'formatDate': {
+            return resolveDynamicValue(args.value);
+          }
+          default:
+            if (args.value !== undefined) {
+              return resolveDynamicValue(args.value);
+            }
+            return '';
+        }
+      }
+
+      // Add icons based on textual context and resolve dynamic values
       function enrichText(text) {
-        if (text === null || text === undefined) return '';
-        const textStr = String(text);
+        const resolved = resolveDynamicValue(text);
+        if (resolved === null || resolved === undefined) return '';
+        const textStr = String(resolved);
         let enriched = textStr;
         if (textStr.includes("revenue") || textStr.includes("doanh thu") || textStr.includes("$")) {
           enriched = "💵 " + enriched;
@@ -1565,14 +1649,8 @@
           });
         }
 
-        // Render dynamic components
-        renderA2uiCanvas(result.ui);
-
-        // Aggregate and Render Interactive Chart from result.data
-        const chartBox = document.getElementById('chartBox');
-        const chartGrid = document.getElementById('chartGrid');
-        
-        let salesData = [];
+        // Parse and populate salesData first, so renderA2uiCanvas can successfully resolve JSON pointers / function calls
+        salesData = [];
         if (result.data) {
           let parsed = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
           // Handle nested format: {columns: [...], row_count: N, data: [...]}
@@ -1582,6 +1660,13 @@
             salesData = parsed;
           }
         }
+
+        // Render dynamic components
+        renderA2uiCanvas(result.ui);
+
+        // Aggregate and Render Interactive Chart from result.data
+        const chartBox = document.getElementById('chartBox');
+        const chartGrid = document.getElementById('chartGrid');
 
         if (salesData && Array.isArray(salesData) && salesData.length > 0) {
           // Dynamically detect the best grouping column (categorical/text column)
