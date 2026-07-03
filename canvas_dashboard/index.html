@@ -948,6 +948,10 @@
     }
 
     @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
       body { background: white !important; color: black !important; height: auto !important; overflow: visible !important; }
       header, .left-sidebar, .right-sidebar, .btn, #themeToggleBtn, .badge, .tabs-header, #exportPdfBtn { display: none !important; }
       .container { height: auto !important; overflow: visible !important; display: block !important; }
@@ -991,20 +995,62 @@
         <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem;">
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt('Compare Q4 revenue between North and South regions.')">
-              👉 Compare North & South Q4
+                    onclick="setPrompt('Who is the top sales representative with the highest total revenue?')">
+              🏆 Top revenue sales rep
             </button>
           </li>
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt('Show total revenue by product category (Electronics, Furniture, Software) across Q3 and Q4.')">
-              👉 Total Revenue by Category
+                    onclick="setPrompt('Compare Q3 vs Q4 revenue growth for each product category.')">
+              ⚖️ Q3 vs Q4 category growth
             </button>
           </li>
           <li>
             <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
-                    onclick="setPrompt('Find the sales rep with the highest average deal size and display their sales details.')">
-              👉 Top Sales Representative
+                    onclick="setPrompt('Show monthly revenue trend from July to December.')">
+              📈 Monthly revenue trend
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('What is the revenue share percentage of each product category?')">
+              🥧 Revenue share by category
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('Compare total revenue between North and South regions for Q4.')">
+              🗺️ North vs South Q4 comparison
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('Which product category sold the most units overall?')">
+              📦 Most units sold by category
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('Show the average deal size for each sales representative, ranked highest to lowest.')">
+              💰 Avg deal size by sales rep
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('Show full performance summary for North region: total revenue, total units sold, and average deal size.')">
+              📊 North region full summary
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('Show Q4 Software category revenue broken down by sales representative.')">
+              💻 Q4 Software revenue by rep
+            </button>
+          </li>
+          <li>
+            <button class="btn" style="width:100%; background:rgba(0,0,0,0.03); color:var(--text-main); font-size:0.75rem; padding:0.5rem; text-align:left; justify-content:flex-start; box-shadow:none; border: 1px solid var(--border-card);"
+                    onclick="setPrompt('Give me an overall sales performance overview across all regions, quarters, and categories.')">
+              🌐 Overall performance overview
             </button>
           </li>
         </ul>
@@ -1044,7 +1090,8 @@
 
     <!-- Center Panel: The live rendering canvas -->
     <div class="workspace" id="canvasPanel">
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem; flex-shrink: 0;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-shrink: 0;">
+        <div id="resultSectionTitle" style="font-size: 1rem; font-weight: 700; color: var(--text-main); opacity: 0; transition: opacity 0.4s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;"></div>
         <button id="exportPdfBtn" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 6px; box-shadow: none; border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); cursor: pointer; transition: all 0.2s ease;" onclick="window.print()">
           📄 Export Report
         </button>
@@ -1059,7 +1106,7 @@
       
       <!-- Integrated Dynamic Bar Chart Box -->
       <div class="chart-box" id="chartBox" style="margin-bottom: 2rem;">
-        <div class="chart-title">📊 Dynamic Revenue Analysis Chart</div>
+        <div class="chart-title" id="chartTitle">📊 Dynamic Revenue Analysis Chart</div>
         <div class="chart-grid" id="chartGrid"></div>
       </div>
     </div>
@@ -1098,20 +1145,39 @@
     </div>
   </div>
 
-  <!-- Dialog/Modal helper for A2UI Action Binding -->
-  <div id="actionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.5); backdrop-filter:blur(5px); z-index:100; align-items:center; justify-content:center;">
-    <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:16px; padding:2rem; width:450px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
-      <h2 style="font-size:1.5rem; margin-bottom:1rem; color:var(--text-main);" id="modalTitle">Action Triggered</h2>
-      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;" id="modalBody">The A2UI action button has successfully triggered the event callback!</p>
-      <button class="a2ui-button" onclick="document.getElementById('actionModal').style.display='none'">Close</button>
+  <!-- Detail Modal: Smart data viewer -->
+  <div id="actionModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(6px); z-index:200; align-items:center; justify-content:center;" onclick="if(event.target===this)closeDetailModal()">
+    <div id="modalPanel" style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:20px; padding:0; width:min(720px,94vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5); overflow:hidden; animation: slideUpModal 0.3s ease;">
+      <!-- Modal Header -->
+      <div style="padding:1.5rem 1.75rem 1rem; border-bottom:1px solid var(--border-card); display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;">
+        <div>
+          <div id="modalTitle" style="font-size:1.2rem; font-weight:700; color:var(--text-main); margin-bottom:0.25rem;">Detail View</div>
+          <div id="modalSubtitle" style="font-size:0.8rem; color:var(--text-muted);"></div>
+        </div>
+        <button onclick="closeDetailModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer; line-height:1; padding:0.2rem 0.4rem; border-radius:6px; transition:all 0.15s;" onmouseover="this.style.background='var(--bg-input)'" onmouseout="this.style.background='none'">✕</button>
+      </div>
+      <!-- KPI Summary Strip -->
+      <div id="modalKpiStrip" style="display:flex; gap:0.75rem; padding:1rem 1.75rem; background:var(--bg-input); border-bottom:1px solid var(--border-card); overflow-x:auto; flex-shrink:0;"></div>
+      <!-- Data Table -->
+      <div id="modalBody" style="padding:1.25rem 1.75rem; overflow-y:auto; flex:1;"></div>
+      <!-- Footer -->
+      <div style="padding:1rem 1.75rem; border-top:1px solid var(--border-card); display:flex; justify-content:flex-end; gap:0.75rem;">
+        <button class="btn" style="background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-card); box-shadow:none; padding:0.5rem 1.2rem; font-size:0.85rem;" onclick="closeDetailModal()">Close</button>
+      </div>
     </div>
   </div>
+  <style>
+    @keyframes slideUpModal {
+      from { opacity:0; transform: translateY(24px) scale(0.97); }
+      to   { opacity:1; transform: translateY(0)   scale(1); }
+    }
+  </style>
 
   <script>
     let dbRows = [];
     let currentRawJson = null;
     let salesData = [];
-
+    const currentLang = 'en';
 
 
     // Theme Toggle implementation
@@ -1154,6 +1220,183 @@
 
     function setPrompt(promptText) {
       document.getElementById('promptInput').value = promptText;
+    }
+
+    function closeDetailModal() {
+      document.getElementById('actionModal').style.display = 'none';
+    }
+
+    function fmtNum(val) {
+      const n = parseFloat(val);
+      if (isNaN(n)) return val;
+      if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
+      if (n >= 1000)    return '$' + (n / 1000).toFixed(1) + 'K';
+      return n.toLocaleString();
+    }
+
+    function showDetailModal(btnLabel, actionStr, actionContext) {
+      const titleEl    = document.getElementById('modalTitle');
+      const subtitleEl = document.getElementById('modalSubtitle');
+      const kpiEl      = document.getElementById('modalKpiStrip');
+      const bodyEl     = document.getElementById('modalBody');
+
+      // ── 1. Derive filter from action string ─────────────────────────────────
+      let filterKey   = null;   // e.g. 'region'
+      let filterVal   = null;   // e.g. 'North'
+      let displayContext = '';
+
+      // drilldown:North / drilldown:Software / etc.
+      if (actionStr && actionStr.includes(':')) {
+        const parts = actionStr.split(':');
+        filterVal = parts.slice(1).join(':').trim();
+        // Guess which column this value belongs to
+        if (salesData && salesData.length > 0) {
+          const sample = salesData[0];
+          for (const k of Object.keys(sample)) {
+            if (salesData.some(r => String(r[k]).toLowerCase() === filterVal.toLowerCase())) {
+              filterKey = k;
+              filterVal = salesData.find(r => String(r[k]).toLowerCase() === filterVal.toLowerCase())[k];
+              break;
+            }
+          }
+        }
+        displayContext = filterVal ? ` — ${filterVal}` : '';
+      }
+
+      // ── 2. Smart title from button label ────────────────────────────────────
+      // Strip generic words and build a clear title
+      let cleanLabel = btnLabel
+        .replace(/view details?/i, '')
+        .replace(/xem chi ti\u1ebft/i, '')
+        .replace(/drill.?down/i, '')
+        .replace(/details?/i, '')
+        .trim();
+      
+      const promptText = document.getElementById('promptInput').value.trim();
+      let title = '';
+      if (cleanLabel) {
+        title = '🔍 ' + cleanLabel + displayContext;
+      } else if (filterVal) {
+        title = '🔍 Detail: ' + filterVal;
+      } else {
+        title = '🔍 Data Detail View';
+      }
+      titleEl.textContent = title;
+      subtitleEl.textContent = `Based on: "${promptText.length > 80 ? promptText.slice(0,77)+'…' : promptText}"  •  ${(salesData||[]).length} rows in dataset`;
+
+      // ── 3. Filter data if we have a context ─────────────────────────────────
+      let viewData = salesData || [];
+      if (filterKey && filterVal) {
+        viewData = viewData.filter(r => String(r[filterKey]).toLowerCase() === filterVal.toLowerCase());
+      }
+
+      // ── 4. Build KPI summary strip ──────────────────────────────────────────
+      const numCols = viewData.length > 0
+        ? Object.keys(viewData[0]).filter(k => typeof viewData[0][k] === 'number' || !isNaN(parseFloat(viewData[0][k])))
+        : [];
+      
+      const kpiDefs = [
+        { key: 'total_revenue',  label: 'Total Revenue',  icon: '💰' },
+        { key: 'revenue',        label: 'Revenue',         icon: '💰' },
+        { key: 'total_units',    label: 'Total Units',     icon: '📦' },
+        { key: 'units_sold',     label: 'Units Sold',      icon: '📦' },
+        { key: 'avg_deal_size',  label: 'Avg Deal Size',   icon: '🤝' },
+        { key: 'avg_deal',       label: 'Avg Deal',        icon: '🤝' },
+        { key: 'pct_share',      label: 'Revenue Share',   icon: '🥧' },
+        { key: 'growth',         label: 'Q3→Q4 Growth',    icon: '📈' },
+        { key: 'q3_revenue',     label: 'Q3 Revenue',      icon: '📅' },
+        { key: 'q4_revenue',     label: 'Q4 Revenue',      icon: '📅' },
+      ];
+
+      let kpiHtml = '';
+      const usedKeys = new Set();
+      for (const def of kpiDefs) {
+        if (!numCols.includes(def.key)) continue;
+        usedKeys.add(def.key);
+        const sum = viewData.reduce((acc, r) => acc + (parseFloat(r[def.key]) || 0), 0);
+        const isPct = def.key.includes('pct') || def.key.includes('share');
+        const displayVal = isPct
+          ? sum.toFixed(1) + '%'
+          : (def.key.includes('avg') ? fmtNum(sum / viewData.length) : fmtNum(sum));
+        kpiHtml += `<div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:12px; padding:0.75rem 1.1rem; min-width:120px; flex-shrink:0;">
+          <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:0.3rem;">${def.icon} ${def.label}</div>
+          <div style="font-size:1.1rem; font-weight:700; color:var(--primary);">${displayVal}</div>
+          <div style="font-size:0.68rem; color:var(--text-muted); margin-top:0.1rem;">${filterVal ? filterVal : 'All'} · ${viewData.length} rows</div>
+        </div>`;
+      }
+
+      // Add row count KPI if no numeric KPIs found
+      if (!kpiHtml) {
+        kpiHtml = `<div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:12px; padding:0.75rem 1.1rem; min-width:120px;">
+          <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:0.3rem;">📋 Records</div>
+          <div style="font-size:1.1rem; font-weight:700; color:var(--primary);">${viewData.length}</div>
+        </div>`;
+      }
+      kpiEl.innerHTML = kpiHtml;
+
+      // ── 5. Build data table ─────────────────────────────────────────────────
+      if (!viewData.length) {
+        bodyEl.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">No matching data found for this context.</div>`;
+        return;
+      }
+
+      const cols = Object.keys(viewData[0]);
+      const colLabels = {
+        region:'Region', quarter:'Quarter', month:'Month', product_category:'Category',
+        revenue:'Revenue', total_revenue:'Total Revenue', units_sold:'Units Sold',
+        total_units:'Total Units', avg_deal_size:'Avg Deal Size', avg_deal:'Avg Deal',
+        sales_rep:'Sales Rep', pct_share:'Share %', growth:'Growth',
+        q3_revenue:'Q3 Revenue', q4_revenue:'Q4 Revenue', id:'ID'
+      };
+
+      const colorPalette = ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899'];
+      const isNumCol = (col) => viewData.some(r => typeof r[col] === 'number' || (!isNaN(parseFloat(r[col])) && r[col] !== '' && r[col] !== null));
+
+      let tableHtml = `<div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border-card);">`;
+      for (const col of cols) {
+        if (col === 'id') continue;
+        tableHtml += `<th style="padding:0.6rem 0.8rem; text-align:left; color:var(--text-muted); font-weight:600; font-size:0.73rem; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap;">${colLabels[col] || col.replace(/_/g,' ')}</th>`;
+      }
+      tableHtml += `</tr></thead><tbody>`;
+
+      const maxVal = {};
+      for (const col of cols) {
+        if (isNumCol(col)) {
+          maxVal[col] = Math.max(...viewData.map(r => parseFloat(r[col]) || 0), 1);
+        }
+      }
+
+      viewData.forEach((row, idx) => {
+        const bg = idx % 2 === 0 ? 'transparent' : 'rgba(99,102,241,0.03)';
+        tableHtml += `<tr style="border-bottom:1px solid var(--border-card); background:${bg}; transition:background 0.15s;" onmouseover="this.style.background='rgba(99,102,241,0.07)'" onmouseout="this.style.background='${bg}'">`;
+        for (const col of cols) {
+          if (col === 'id') continue;
+          const val = row[col];
+          if (isNumCol(col) && maxVal[col]) {
+            const n = parseFloat(val) || 0;
+            const pct = Math.round((n / maxVal[col]) * 100);
+            const isPct = col.includes('pct') || col.includes('share');
+            const displayVal = isPct ? n.toFixed(1) + '%' : (col.includes('avg') ? fmtNum(n) : fmtNum(n));
+            const barColor = colorPalette[cols.indexOf(col) % colorPalette.length];
+            tableHtml += `<td style="padding:0.6rem 0.8rem; color:var(--text-main); font-weight:600;">
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <span style="min-width:70px;">${displayVal}</span>
+                <div style="flex:1; height:6px; background:var(--bg-input); border-radius:3px; max-width:90px;">
+                  <div style="width:${pct}%; height:6px; background:${barColor}; border-radius:3px;"></div>
+                </div>
+              </div>
+            </td>`;
+          } else {
+            tableHtml += `<td style="padding:0.6rem 0.8rem; color:var(--text-main);">${val ?? '—'}</td>`;
+          }
+        }
+        tableHtml += `</tr>`;
+      });
+      tableHtml += `</tbody></table></div>`;
+      bodyEl.innerHTML = tableHtml;
     }
 
     async function loadDbData(btnElement) {
@@ -1489,25 +1732,16 @@
                 
                 if (region) {
                   const promptInput = document.getElementById('promptInput');
-                  promptInput.value = `Detailed analysis for region ${region}`;
+                  promptInput.value = currentLang === 'vi' ? `So sánh chi tiết doanh số vùng ${region}` : `Detailed analysis for region ${region}`;
                   triggerGeneration();
                   return;
                 }
               }
               
-              // Handle details highlight action
-              if (actionStr.toLowerCase().includes("detail")) {
-                // Highlight all cards on click!
-                document.querySelectorAll('.a2ui-card').forEach(card => {
-                  card.classList.toggle('highlight');
-                });
-                
-                document.getElementById('modalTitle').textContent = "🔍 Details Opened";
-                document.getElementById('modalBody').textContent = "The system highlighted all report cards on the Canvas!";
-              } else {
-                document.getElementById('modalTitle').textContent = "⚡ Action Triggered";
-                document.getElementById('modalBody').textContent = `A2UI Button Action: "${actionStr}" successfully triggered!`;
-              }
+              // Handle details / view / chi tiết / any generic button action
+              // Build a smart detail modal from current salesData
+              const btnLabel = comp.label || comp.text || actionStr || 'Detail';
+              showDetailModal(btnLabel, actionStr, actionContext);
               document.getElementById('actionModal').style.display = 'flex';
             };
             break;
@@ -1598,8 +1832,16 @@
           chartData[keyVal] = (chartData[keyVal] || 0) + val;
         });
 
-        const labels = Object.keys(chartData);
-        const values = Object.values(chartData);
+        // Sort chartData by value descending, UNLESS groupKey is a time-series (preserve time order)
+        const isTimeSeries = groupKey && (groupKey.includes('month') || groupKey.includes('quarter') || groupKey.includes('date') || groupKey.includes('year') || groupKey.includes('week'));
+        let sortedEntries = Object.entries(chartData);
+        if (!isTimeSeries) {
+          sortedEntries = sortedEntries.sort((a, b) => b[1] - a[1]);
+        }
+        const labels = sortedEntries.map(e => e[0]);
+        const values = sortedEntries.map(e => e[1]);
+        // Rebuild chartData in sorted order for downstream usage
+        sortedEntries.forEach(([k, v]) => { chartData[k] = v; });
         const totalValue = values.reduce((a, b) => a + b, 0);
         const maxValue = Math.max(...values, 1);
 
@@ -1665,7 +1907,7 @@
             accumPct += pct;
           });
           svgHtml += `</svg>`;
-          svgHtml += `<div class="donut-center-label"><div class="donut-center-value">${formatVal(totalValue)}</div><div class="donut-center-sub">Total</div></div>`;
+          svgHtml += `<div class="donut-center-label"><div class="donut-center-value">${formatVal(totalValue)}</div><div class="donut-center-sub">${currentLang === 'vi' ? 'Tổng cộng' : 'Total'}</div></div>`;
           svgHtml += `</div>`; // end donut-svg-container
 
           // Legend with values
@@ -1782,7 +2024,7 @@
             const tooltip = document.createElement('div');
             tooltip.className = 'chart-bar-tooltip';
             const pctOfTotal = ((val / totalValue) * 100).toFixed(1);
-            tooltip.textContent = `${pctOfTotal}% of total`;
+            tooltip.textContent = `${pctOfTotal}% ${currentLang === 'vi' ? 'tổng' : 'of total'}`;
             bar.appendChild(tooltip);
 
             const label = document.createElement('div');
@@ -1793,17 +2035,25 @@
             barContainer.appendChild(label);
             chartGrid.appendChild(barContainer);
 
-            // Animate bar growth with spring effect
-            setTimeout(() => { bar.style.height = `${pct}%`; }, 150 + idx * 120);
+            // Set height directly (CSS transition handles animation). 
+            // This ensures print engines see the full bar height instantly instead of 0% due to setTimeout.
+            bar.style.height = `${pct}%`;
           });
         }
 
         chartBox.style.display = 'flex';
         const cleanGroupKey = groupKey.replace(/_/g, ' ');
         const valueLabel = valueKey ? valueKey.replace(/_/g, ' ') : '';
-        let displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Distribution Analysis — by ${cleanGroupKey}` :
-                       activeChartType === 'line' ? `📈 Trend Analysis — by ${cleanGroupKey}` :
-                       `📊 Comparative Analysis — by ${cleanGroupKey}`;
+        let displayTitle = '';
+        if (currentLang === 'vi') {
+          displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Biểu đồ Tỉ lệ Phân bổ — theo ${cleanGroupKey}` :
+                         activeChartType === 'line' ? `📈 Biểu đồ Xu hướng — theo ${cleanGroupKey}` :
+                         `📊 Biểu đồ So sánh — theo ${cleanGroupKey}`;
+        } else {
+          displayTitle = activeChartType === 'pie' || activeChartType === 'donut' ? `📊 Distribution Analysis — by ${cleanGroupKey}` :
+                         activeChartType === 'line' ? `📈 Trend Analysis — by ${cleanGroupKey}` :
+                         `📊 Comparative Analysis — by ${cleanGroupKey}`;
+        }
         if (valueLabel) displayTitle += ` <span style="font-size:0.8rem;color:var(--text-muted);font-weight:500;"> (${valueLabel})</span>`;
         chartBox.querySelector('.chart-title').innerHTML = displayTitle;
       } else {
@@ -1811,11 +2061,55 @@
       }
     }
 
+    function buildResultTitle(prompt) {
+      // Generate a smart, context-aware title from the user prompt
+      const p = prompt.trim();
+      const lower = p.toLowerCase();
+
+      // Detect key Vietnamese/English intent keywords and produce a concise title
+      if (/cao nhất|highest|top|best|most/.test(lower)) {
+        if (/doanh thu|revenue/.test(lower)) return '🏆 Top Revenue Analysis';
+        if (/deal|avg_deal|deal size/.test(lower)) return '🏆 Top Deal Size Analysis';
+        if (/units|sản phẩm|sold/.test(lower)) return '🏆 Top Units Sold Analysis';
+        return '🏆 Top Performance Analysis';
+      }
+      if (/thấp nhất|lowest|bottom|worst|least/.test(lower)) {
+        return '📉 Lowest Performance Analysis';
+      }
+      if (/so sánh|compare|comparison/.test(lower)) {
+        if (/vùng|region|north|south|bắc|nam/.test(lower)) return '⚖️ Regional Comparison';
+        if (/quý|quarter|q3|q4/.test(lower)) return '⚖️ Quarterly Comparison';
+        if (/danh mục|category|electronics|software|furniture/.test(lower)) return '⚖️ Category Comparison';
+        return '⚖️ Comparative Analysis';
+      }
+      if (/xu hướng|trend|over time|theo thời gian/.test(lower)) return '📈 Trend Analysis';
+      if (/phân phối|distribution|breakdown/.test(lower)) return '📊 Distribution Breakdown';
+      if (/doanh thu|revenue/.test(lower)) {
+        if (/danh mục|category/.test(lower)) return '📊 Revenue by Category';
+        if (/vùng|region/.test(lower)) return '📊 Revenue by Region';
+        if (/quý|quarter/.test(lower)) return '📊 Revenue by Quarter';
+        if (/tháng|month/.test(lower)) return '📊 Monthly Revenue';
+        if (/nhân viên|sales rep|sales_rep/.test(lower)) return '📊 Revenue by Sales Rep';
+        return '📊 Revenue Analysis';
+      }
+      if (/nhân viên|sales rep|người bán/.test(lower)) return '👤 Sales Rep Performance';
+      if (/sản phẩm|product|category/.test(lower)) return '📦 Product Analysis';
+      if (/vùng|region/.test(lower)) return '🗺️ Regional Analysis';
+      if (/quý|quarter/.test(lower)) return '📅 Quarterly Overview';
+      if (/tháng|month/.test(lower)) return '📅 Monthly Overview';
+      // Fallback: truncate the prompt itself as title
+      return '📋 ' + (p.length > 60 ? p.substring(0, 57) + '…' : p);
+    }
+
     async function triggerGeneration() {
       const prompt = document.getElementById('promptInput').value;
       const generateBtn = document.getElementById('generateBtn');
       const timeline = document.getElementById('traceTimeline');
       const jsonBlock = document.getElementById('jsonBlock');
+
+      // Hide old result title while loading
+      const resultTitle = document.getElementById('resultSectionTitle');
+      if (resultTitle) { resultTitle.style.opacity = '0'; resultTitle.textContent = ''; }
 
       generateBtn.disabled = true;
       showShimmerSkeleton();
@@ -1944,6 +2238,17 @@
           } else if (Array.isArray(parsed)) {
             salesData = parsed;
           }
+        }
+
+        // Update result section title dynamically from the prompt
+        if (resultTitle) {
+          const cleanTitle = buildResultTitle(prompt);
+          resultTitle.textContent = cleanTitle;
+          setTimeout(() => { resultTitle.style.opacity = '1'; }, 100);
+          
+          // Set page/document title dynamically so printed headers display a clean report name
+          const titleText = cleanTitle.replace(/^[^\w\s\u00C0-\u1EF9]/gi, '').trim();
+          document.title = titleText ? `${titleText} - Sales Report` : "Sales Performance Report";
         }
 
         // Render dynamic components

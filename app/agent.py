@@ -111,7 +111,7 @@ class SalesDashboardState(BaseModel):
     final_output: Optional[dict] = None
     critic_feedback: Optional[str] = None
     update_message: Optional[str] = None
-
+    language: str = "en"
 
 
 # ---------------------------------------------------------------------------
@@ -151,16 +151,37 @@ def clean_json_string(s: str) -> str:
 
 def clean_sql_query(s: str) -> str:
     """Removes SQL code block markdown wrappers (sql, sqlite, etc.) robustly."""
-    s = s.strip()
     import re
-    match = re.search(r'```(?:sql|sqlite)?\s*(.*?)\s*```', s, re.DOTALL | re.IGNORECASE)
+    s = s.strip()
+    
+    # 1. Try to extract content from fenced code block (with or without language tag)
+    match = re.search(r'```(?:[a-zA-Z]*)\s*(.*?)\s*```', s, re.DOTALL)
     if match:
         return match.group(1).strip()
-    if s.startswith("```"):
+    
+    # 2. Handle unclosed code blocks: strip opening fence line
+    if s.startswith('```'):
         lines = s.splitlines()
-        if len(lines) > 1 and (lines[0].lower().startswith("```sql") or lines[0].lower().startswith("```sqlite") or lines[0] == "```"):
-            return "\n".join(lines[1:]).strip("`").strip()
-    return s.strip("`").strip()
+        # Remove first line (the fence), remove trailing backticks
+        content = '\n'.join(lines[1:]).rstrip('`').strip()
+        if content:
+            return content
+    
+    # 3. Strip all backtick characters from start/end
+    s = s.strip('`').strip()
+    
+    # 4. If first line is just a language identifier (sql, sqlite, SQL, etc.), remove it
+    lines = s.splitlines()
+    if lines and re.match(r'^(sql|sqlite|SQL|SQLite)$', lines[0].strip(), re.IGNORECASE):
+        s = '\n'.join(lines[1:]).strip()
+    
+    # 5. Final safety: if the SQL starts with "SELECT", "WITH", "INSERT", etc., we're good
+    # Otherwise try to find the first SELECT/WITH statement
+    select_match = re.search(r'\b(SELECT|WITH|INSERT|UPDATE|DELETE)\b', s, re.IGNORECASE)
+    if select_match and select_match.start() > 0:
+        s = s[select_match.start():].strip()
+    
+    return s
 
 
 def validate_hybrid_output(output_str: str, validator: A2uiValidator, raw_data_fallback: str) -> dict:
@@ -279,7 +300,7 @@ def intent_router_node(ctx: Context) -> str:
     
     lower_prompt = prompt.lower()
     
-    if "update" in lower_prompt or "change" in lower_prompt or "set" in lower_prompt or "modify" in lower_prompt:
+    if "cập nhật" in lower_prompt or "update" in lower_prompt or "đổi" in lower_prompt or "change" in lower_prompt or "set" in lower_prompt or "modify" in lower_prompt:
         from google import genai
         client = genai.Client()
         # Translate to SQL
@@ -306,7 +327,7 @@ def critic_node(ctx: Context) -> str:
     # Check if a chart was explicitly requested but missing
     prompt = ctx.state.get("user_prompt", "").lower()
         
-    if "chart" in prompt:
+    if "biểu đồ" in prompt or "chart" in prompt:
         import json
         ui_str = json.dumps(final_output)
         # Simple heuristic: if they wanted a chart, we expect BarChart or LineChart
@@ -332,15 +353,72 @@ def data_fetcher_node(ctx: Context) -> str:
     elif prompt:
         from google import genai
         client = genai.Client()
-        sys_prompt = """You are a SQLite expert. The table is 'sales' (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep).
+        sys_prompt = """You are a SQLite expert generating queries for a sales database.
+
+        TABLE SCHEMA: sales (id, region, quarter, month, product_category, revenue, units_sold, avg_deal_size, sales_rep)
         
-        CRITICAL VALUE MAPPINGS:
-        - Regions in the database are: 'North', 'South'.
-        - Categories in the database are: 'Electronics', 'Furniture', 'Software'.
-        - Quarters in the database are: 'Q3', 'Q4'.
-        - Months in the database are: 'July', 'August', 'September', 'October', 'November', 'December'.
-        
-        Generate a valid SQL SELECT statement to answer the user's request. Return ONLY the raw SQL query, no markdown, no explanation."""
+        COLUMN VALUE REFERENCE (exact values in DB — always match these):
+        - region: 'North', 'South'  (map Bắc/Miền Bắc→North, Nam/Miền Nam→South)
+        - quarter: 'Q3', 'Q4'
+        - month: 'July','August','September','October','November','December'
+          (map Tháng 7→July, Tháng 8→August, Tháng 9→September, Tháng 10→October, Tháng 11→November, Tháng 12→December)
+        - product_category: 'Electronics', 'Furniture', 'Software'
+          (map Điện tử→Electronics, Nội thất→Furniture, Phần mềm→Software)
+        - sales_rep: text name (e.g. 'Do Thi K', 'Ly Thi M', 'Truong Van L')
+        - revenue, units_sold, avg_deal_size: numeric
+
+        AGGREGATION RULES — follow strictly:
+        1. Ranking / top / highest / lowest / best / worst / most / least
+           → Always GROUP BY the dimension + SUM/AVG + ORDER BY result DESC/ASC
+           → Example "highest revenue sales rep":
+              SELECT sales_rep, SUM(revenue) AS total_revenue FROM sales GROUP BY sales_rep ORDER BY total_revenue DESC LIMIT 1
+           → Example "top 3 categories by units sold":
+              SELECT product_category, SUM(units_sold) AS total_units FROM sales GROUP BY product_category ORDER BY total_units DESC LIMIT 3
+        2. Comparison between groups (region, category, quarter, month, rep)
+           → GROUP BY both dimensions, ORDER BY group label
+           → Example "compare revenue North vs South by quarter":
+              SELECT region, quarter, SUM(revenue) AS total_revenue FROM sales GROUP BY region, quarter ORDER BY quarter, region
+        3. Revenue / units / deal size breakdown by a single dimension
+           → GROUP BY that dimension + ORDER BY value DESC
+           → Example "revenue by category":
+              SELECT product_category, SUM(revenue) AS total_revenue FROM sales GROUP BY product_category ORDER BY total_revenue DESC
+        4. Time-series / trend (by month, by quarter)
+           → GROUP BY time column, ORDER BY natural time order (use CASE for month names)
+           → Example "monthly revenue trend":
+              SELECT month, SUM(revenue) AS total_revenue FROM sales GROUP BY month
+              ORDER BY CASE month WHEN 'July' THEN 1 WHEN 'August' THEN 2 WHEN 'September' THEN 3
+              WHEN 'October' THEN 4 WHEN 'November' THEN 5 WHEN 'December' THEN 6 END
+        5. Filtering (show only X region / only Q4 / only Software category)
+           → Use WHERE clause, then GROUP BY if aggregation needed
+           → Example "Q4 revenue by sales rep in North region":
+              SELECT sales_rep, SUM(revenue) AS total_revenue FROM sales WHERE region='North' AND quarter='Q4' GROUP BY sales_rep ORDER BY total_revenue DESC
+        6. Percentage / share / proportion
+           → Use subquery for total, compute ratio in SELECT
+           → Example "revenue share by region":
+              SELECT region, SUM(revenue) AS total_revenue,
+              ROUND(SUM(revenue)*100.0/(SELECT SUM(revenue) FROM sales),1) AS pct_share
+              FROM sales GROUP BY region ORDER BY total_revenue DESC
+        7. Average metrics (avg deal size, avg units per month)
+           → Use AVG() instead of SUM()
+           → Example "average deal size by sales rep":
+              SELECT sales_rep, ROUND(AVG(avg_deal_size),0) AS avg_deal FROM sales GROUP BY sales_rep ORDER BY avg_deal DESC
+        8. Multi-metric overview (show multiple KPIs)
+           → SELECT multiple aggregates in one query
+           → Example "full performance summary by region":
+              SELECT region, SUM(revenue) AS total_revenue, SUM(units_sold) AS total_units, ROUND(AVG(avg_deal_size),0) AS avg_deal FROM sales GROUP BY region ORDER BY total_revenue DESC
+        9. Q3 vs Q4 growth / change
+           → Use conditional aggregation with CASE WHEN
+           → Example "Q3 vs Q4 revenue by category":
+              SELECT product_category,
+              SUM(CASE WHEN quarter='Q3' THEN revenue ELSE 0 END) AS q3_revenue,
+              SUM(CASE WHEN quarter='Q4' THEN revenue ELSE 0 END) AS q4_revenue,
+              SUM(CASE WHEN quarter='Q4' THEN revenue ELSE 0 END) - SUM(CASE WHEN quarter='Q3' THEN revenue ELSE 0 END) AS growth
+              FROM sales GROUP BY product_category ORDER BY growth DESC
+        10. If prompt is vague or general (no specific metric/dimension mentioned)
+            → Return a comprehensive overview: SELECT region, quarter, product_category, SUM(revenue) AS total_revenue, SUM(units_sold) AS total_units FROM sales GROUP BY region, quarter, product_category ORDER BY total_revenue DESC
+
+        Always use meaningful column aliases (total_revenue, total_units, avg_deal, pct_share, q3_revenue, q4_revenue, growth, etc.).
+        Return ONLY the raw SQL query, no markdown, no explanation."""
         resp = generate_content_with_retry(
             client=client,
             model="gemini-2.5-flash",
@@ -401,12 +479,15 @@ def ui_generator_node(ctx: Context) -> dict:
     update_msg = ctx.state.get("update_message") if isinstance(ctx.state, dict) else getattr(ctx.state, "update_message", None)
     update_info = f'\n    SYSTEM ACTION STATUS: "{update_msg}"\n    (Please display a clean success notification card or label at the top of the dashboard layout to show the user that their data update was executed successfully.)\n' if update_msg else ""
 
-    prompt = f"""
-    {instructions}
-
+    lang_info = """
     LANGUAGE REQUIREMENT:
     You MUST generate all UI text, titles, labels, descriptions, and summaries in ENGLISH.
     Keep all numbers, currency signs ($ or USD), and raw data fields (like representative names, category names) original.
+    """
+
+    prompt = f"""
+    {instructions}
+    {lang_info}
 
     You MUST create a user interface that directly answers and satisfies the following user request:
     USER REQUEST: "{user_prompt}"
@@ -414,38 +495,50 @@ def ui_generator_node(ctx: Context) -> dict:
     Available Sales Data (JSON):
     {raw_data}
 
-    You MUST respond with a single JSON object containing:
+    LAYOUT INTELLIGENCE RULES — read carefully and apply:
+    
+    A) TITLE CARD (id="title-card"): The main dashboard title MUST directly name what the user asked for.
+       - "người có doanh thu cao nhất" → "Top Revenue Sales Representative"
+       - "so sánh Q3 và Q4" → "Q3 vs Q4 Revenue Comparison"
+       - "doanh thu theo danh mục" → "Revenue Breakdown by Product Category"
+       - "xu hướng doanh thu" → "Monthly Revenue Trend"
+       Always use Text with variant="h1" or variant="heading" for the title.
+
+    B) EXECUTIVE SUMMARY (id="exec-summary"): 2–3 bullet points ONLY.
+       Extract the most important insight from the data. Examples:
+       - If ranking: "• [Name] leads with $X.XXM total revenue — X% above average"
+       - If comparison: "• [Category A] outperforms [Category B] by $X in Q4"
+       - If trend: "• Revenue peaked in [Month] at $X"
+       Use "•" bullets. NEVER write paragraphs. Keep each bullet under 15 words.
+
+    C) DATA CARDS — choose the right layout based on query type:
+       - RANKING query (top/highest/lowest): Show 1 highlighted winner card + ranked list of all entries with values.
+       - COMPARISON query (A vs B): Show side-by-side Row cards for each group. Include delta/difference if possible.
+       - BREAKDOWN query (by category/region): Show one card per group with SUM value prominently. Sort by value desc.
+       - TREND query (by month/quarter): Show sequential cards ordered by time. Label each time period clearly.
+       - FILTER query (specific region/quarter): Show summary card for that filter + detail cards.
+       - GENERAL/OVERVIEW query: Show top-level KPI cards (total revenue, total units, avg deal size) then a breakdown.
+
+    D) KEY-VALUE PAIRS: Always show actual numbers from the data. Format:
+       - Revenue: use $ prefix, round to 2 decimal places for millions (e.g. $1.47M, $654.0K)
+       - Units: show as integer with comma separator (e.g. 1,240 units)
+       - Deal size: show as $ with comma separator (e.g. $12,500)
+       - Percentages: show with % suffix (e.g. 34.2%)
+
+    E) STRICT RULES:
+       - Use ONLY: Column, Row, Text, Button, Card components.
+       - NO raw HTML, CSS, or JavaScript.
+       - Root component MUST have id "root". All children IDs must exist in components list.
+       - Use Text variant="h1"/"heading" for title, "h2"/"h3" for section headers, "body" for values, "caption" for labels.
+       - Max 1 emoji in the title card. Zero emojis elsewhere.
+       - For region cards, add a Button with action="drilldown:<RegionName>" to enable drill-down.
+       - The "data" field must be the exact raw data list from the sales data provided.
+
+    You MUST respond with a single JSON object:
     1. "data": The raw JSON sales data list.
-    2. "ui": A valid A2UI v0.9 message that displays this sales data in a clean layout.
-       Specifically, the "ui" field must be an UpdateComponentsMessage:
-       {{
-         "version": "v0.9",
-         "updateComponents": {{
-           "surfaceId": "sales-canvas",
-           "components": [
-             {{
-               "id": "root",
-               "component": "Column",
-               "children": ["title-card", "summary-row", "details-column"]
-             }},
-             ...
-           ]
-         }}
-       }}
-    3. "chart_type": (Optional string) Choose the best chart type to visualize this query: "bar" (default for region/category comparative lists), "line" (ideal for quarter-over-quarter timeline trends), or "pie" (ideal for showing product category share distribution).
-       
-       Rules:
-        - Use ONLY the following Basic Catalog components: Column, Row, Text, Button, Card.
-        - Do NOT use raw HTML, CSS, or JS.
-        - Layout columns using Column and rows using Row. Group sections using Card.
-        - Render labels and values using Text components.
-        - **Dashboard Title and Heading Typography**: For the main dashboard title (rendered inside the top title card), you MUST use a Text component with `variant="h1"` or `variant="heading"` to render it as a large, bold, premium title. For section titles (like "Executive Summary" or table section headers), you MUST use a Text component with `variant="h2"` or `variant="h3"` to render them as prominent, bold headings. Do NOT use the default body variant or caption variant for main dashboard or section titles.
-        - The root of the components list must have id "root".
-        - All referenced component IDs in "children" list must exist.
-        - **Custom Dashboard Title**: The dashboard title (rendered inside the top title card) MUST directly reflect the specific user query (e.g., "Top Sales Representative", "Best Sales Employee" instead of a generic "Q3 & Q4 Sales Dashboard").
-        - **Concise Executive Summary**: The Executive Summary (id="exec-summary") MUST be extremely concise, punchy, and short (maximum 2-3 bullet points, using standard list symbols like "-" or "•"). Do NOT write long paragraphs.
-        - **Strict Emoji Control**: Use emojis EXTREMELY sparingly (maximum 1 emoji in the main title card only). Do NOT spam emojis in the executive summary, key-value labels, or description cards. Keep it highly professional and premium.
-        - For regional sales cards, you should add a Button (e.g. id="drill-north") with action set to "drilldown:<RegionName>" (e.g. "drilldown:North") to enable interactive drilldown analysis.
+    2. "ui": A valid A2UI v0.9 UpdateComponentsMessage.
+    3. "chart_type": Choose ONE: "bar" (ranking/comparison), "line" (time-series trend), "pie" (share/proportion/distribution).
+       Rules: bar for region/category/rep comparisons, line for month/quarter trends, pie for percentage/share queries.
     """
 
     from google import genai
