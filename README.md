@@ -1,6 +1,6 @@
-# ?? A2UI Data Canvas — Agentic Sales Intelligence Dashboard
+ï»¿# ?? A2UI Data Canvas â€” Agentic Sales Intelligence Dashboard
 
-> **AI Agents: Intensive Vibe Coding Capstone Project** — Google & Kaggle
+> **AI Agents: Intensive Vibe Coding Capstone Project** â€” Google & Kaggle
 > **Competition Track:** ?? Agents for Business
 > **Author:** DoanNguyenDuyKha
 
@@ -14,15 +14,14 @@
 
 ## ?? Demo Video
 
-**[Watch the 5-Minute Demo on YouTube](https://www.youtube.com/watch?v=YOUR_VIDEO_ID_HERE)**
+**[Watch the 5-Minute Demo on YouTube](https://youtu.be/IU5HIEICL4g?si=dFYRvhyQGj0yG8da)**
 
-> *Replace the link above with your actual YouTube demo URL before submitting to Kaggle.*
 
 ---
 
 ## ?? Problem Statement
 
-Standard business dashboards are **static, rigid, and developer-dependent**. Updating a query, changing a chart type, or drilling into a region requires a developer to modify code, redeploy, and wait — a process taking hours or days.
+Standard business dashboards are **static, rigid, and developer-dependent**. Updating a query, changing a chart type, or drilling into a region requires a developer to modify code, redeploy, and wait â€” a process taking hours or days.
 
 **A2UI Data Canvas solves this** by giving business analysts a conversational AI interface to:
 - Ask any data question in natural language
@@ -32,7 +31,7 @@ Standard business dashboards are **static, rigid, and developer-dependent**. Upd
 
 ### Why an Agent-Based Approach?
 
-A single LLM call cannot reliably handle all steps: understanding intent, constructing SQL, validating results, designing a multi-card layout, and self-correcting on schema errors. The **ADK Graph Workflow** decomposes this into specialized, accountable nodes — enabling self-correction loops, MCP tool integration, and schema-validated output.
+A single LLM call cannot reliably handle all steps: understanding intent, constructing SQL, validating results, designing a multi-card layout, and self-correcting on schema errors. The **ADK Graph Workflow** decomposes this into specialized, accountable nodes â€” enabling self-correction loops, MCP tool integration, and schema-validated output.
 
 ---
 
@@ -84,7 +83,7 @@ MCP Server (mcp_server.py, stdio transport):
   SQLite: data/sales.db
 ```
 
-### ADK Graph Workflow — Node Details
+### ADK Graph Workflow â€” Node Details
 
 ```mermaid
 graph TD
@@ -126,16 +125,16 @@ graph TD
 ```
 a2ui-data-canvas/
 +-- app/
-¦   +-- agent.py              # ADK Graph Workflow and all 4 agent nodes
-¦   +-- fast_api_app.py       # FastAPI server with /run_sse, /api/canvas endpoints
+Â¦   +-- agent.py              # ADK Graph Workflow and all 4 agent nodes
+Â¦   +-- fast_api_app.py       # FastAPI server with /run_sse, /api/canvas endpoints
 +-- canvas_dashboard/
-¦   +-- index.html            # Single-page dashboard: A2UI renderer plus chart engine
+Â¦   +-- index.html            # Single-page dashboard: A2UI renderer plus chart engine
 +-- data/
-¦   +-- sales.db              # Pre-seeded SQLite database (Q3/Q4 regional sales)
+Â¦   +-- sales.db              # Pre-seeded SQLite database (Q3/Q4 regional sales)
 +-- tests/
-¦   +-- unit/                 # Unit tests (offline, mocked, ~2.5 seconds)
-¦   +-- integration/          # E2E SSE stream integration tests
-¦   +-- test_a2ui.py          # A2UI schema validation tests
+Â¦   +-- unit/                 # Unit tests (offline, mocked, ~2.5 seconds)
+Â¦   +-- integration/          # E2E SSE stream integration tests
+Â¦   +-- test_a2ui.py          # A2UI schema validation tests
 +-- mcp_server.py             # FastMCP SQLite Server (stdio transport)
 +-- pyproject.toml            # Dependencies, pytest config, project metadata
 +-- README.md                 # This file
@@ -147,8 +146,8 @@ a2ui-data-canvas/
 
 ### Prerequisites
 - Python 3.11 or higher
-- uv package manager — https://docs.astral.sh/uv/getting-started/installation/
-- Google Gemini API Key — https://aistudio.google.com/
+- uv package manager â€” https://docs.astral.sh/uv/getting-started/installation/
+- Google Gemini API Key â€” https://aistudio.google.com/
 
 ### 1. Clone the Repository
 
@@ -194,7 +193,7 @@ Open your browser: **http://localhost:8000/canvas**
 "Who has the highest total revenue?"
 "Compare Q3 vs Q4 revenue by product category"
 "Show monthly revenue trend for Software"
-"Revenue breakdown by region — which region leads?"
+"Revenue breakdown by region â€” which region leads?"
 "Update North Q4 Software revenue to 300000"
 ```
 
@@ -229,8 +228,8 @@ agents-cli eval grade
 ```
 
 Custom metrics in `tests/eval/eval_config.yaml`:
-- `visual_behavioral_correctness` — Does the rendered dashboard match user intent?
-- `intent_satisfaction` — Does the SQL query accurately address the question?
+- `visual_behavioral_correctness` â€” Does the rendered dashboard match user intent?
+- `intent_satisfaction` â€” Does the SQL query accurately address the question?
 
 ---
 
@@ -255,7 +254,9 @@ Licensed under the [Apache License 2.0](LICENSE).
 
 ## Acknowledgments
 
-- **Google and Kaggle** — for the AI Agents: Intensive Vibe Coding Course
-- **Google ADK Team** — for the Agent Development Kit 2.0
-- **A2UI Team** — for the Agent-to-UI Protocol v0.9
-- **FastMCP** — for the MCP server framework
+- **Google and Kaggle** â€” for the AI Agents: Intensive Vibe Coding Course
+- **Google ADK Team** â€” for the Agent Development Kit 2.0
+- **A2UI Team** â€” for the Agent-to-UI Protocol v0.9
+- **FastMCP** â€” for the MCP server framework
+
+
