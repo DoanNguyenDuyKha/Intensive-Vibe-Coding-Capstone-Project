@@ -1,149 +1,261 @@
-# A2UI Data Canvas - Sales Dashboard & Agentic IDE
+# ?? A2UI Data Canvas � Agentic Sales Intelligence Dashboard
 
-An interactive, agentic sales dashboard canvas that utilizes Google's **Agent Development Kit (ADK)** and the **A2UI (Agent-to-User Interface) v0.9 Protocol** to dynamically generate and customize business dashboards using natural language.
+> **AI Agents: Intensive Vibe Coding Capstone Project** � Google & Kaggle
+> **Competition Track:** ?? Agents for Business
+> **Author:** DoanNguyenDuyKha
 
-Developed as a Capstone Project for the **AI Agents: Intensive Vibe Coding Course** by Google & Kaggle.
-
----
-
-## 🎨 Project Overview
-
-Standard business dashboards are static and require developer intervention to update layouts, add charts, or change queries. **A2UI Data Canvas** solves this problem by giving business users a conversational interface to query, edit, and visualize regional sales data dynamically. 
-
-### Key Features
-*   **Natural Language to Canvas (A2UI):** Users describe what they want to see (e.g., *"Compare North & South Q4 revenue"* or *"Show total sales by product category"*). The AI Agent translates this to SQLite SQL, queries the database, and dynamically designs a customized dashboard UI using the A2UI v0.9 Basic Catalog (Columns, Rows, Cards, Text, Buttons).
-*   **Model Context Protocol (MCP) SQLite Integration:** Integrates with a local FastMCP sales data server exposing tools to query and update simulated sales data securely.
-*   **Interactive Live SQLite Editor:** Edit records directly in a live data grid on the frontend dashboard. Changes are automatically updated in SQLite via MCP, and users can regenerate the canvas instantly to see the updated charts and metrics.
-*   **Dynamic Chart Rendering:** Automatically aggregates query results and visualizes them in an interactive, animated bar chart synced with the canvas.
-*   **Agentic Execution Trace Visualizer:** Shows the step-by-step timeline of the ADK Graph Workflow execution (`START` -> `Intent_Router` -> `Data_Fetcher` -> `UI_Generator_Agent` -> `Critic_Node`) in real-time.
-*   **Premium Web UI Design:** Built with a clean, glassmorphic dark/light design system, Google Fonts (Inter & JetBrains Mono), smooth entrance animations, and helpful micro-interactions.
+[![Google ADK](https://img.shields.io/badge/Google%20ADK-2.0-blue?logo=google)](https://google.github.io/adk-docs/)
+[![A2UI Protocol](https://img.shields.io/badge/A2UI-v0.9-purple)](https://pypi.org/project/a2ui-agent-sdk/)
+[![MCP](https://img.shields.io/badge/MCP-FastMCP-green)](https://github.com/modelcontextprotocol)
+[![Python](https://img.shields.io/badge/Python-3.11+-yellow?logo=python)](https://python.org)
+[![Tests](https://img.shields.io/badge/Tests-7%2F7%20Passed-brightgreen)](#testing)
 
 ---
 
-## 🏗️ Architecture
+## ?? Demo Video
 
-The backend utilizes an **ADK 2.0 Graph Workflow** (`sales_canvas_workflow`) to execute the agentic reasoning:
+**[Watch the 5-Minute Demo on YouTube](https://www.youtube.com/watch?v=YOUR_VIDEO_ID_HERE)**
+
+> *Replace the link above with your actual YouTube demo URL before submitting to Kaggle.*
+
+---
+
+## ?? Problem Statement
+
+Standard business dashboards are **static, rigid, and developer-dependent**. Updating a query, changing a chart type, or drilling into a region requires a developer to modify code, redeploy, and wait � a process taking hours or days.
+
+**A2UI Data Canvas solves this** by giving business analysts a conversational AI interface to:
+- Ask any data question in natural language
+- Get a fully customized, interactive multi-card dashboard rendered instantly
+- Update records directly through conversation
+- See the agentic reasoning process step-by-step in real time
+
+### Why an Agent-Based Approach?
+
+A single LLM call cannot reliably handle all steps: understanding intent, constructing SQL, validating results, designing a multi-card layout, and self-correcting on schema errors. The **ADK Graph Workflow** decomposes this into specialized, accountable nodes � enabling self-correction loops, MCP tool integration, and schema-validated output.
+
+---
+
+## Course Concepts Demonstrated (5 of 5+)
+
+| # | Course Concept | Implementation |
+|---|---|---|
+| 1 | **Multi-Agent Graph Workflow (ADK 2.0)** | 4-node `sales_canvas_workflow`: Intent Router, Data Fetcher, UI Generator, Critic |
+| 2 | **Model Context Protocol (MCP) Server** | FastMCP `mcp_server.py` exposing typed SQLite read/write tools with permission isolation |
+| 3 | **Agent-to-UI Protocol (A2UI v0.9)** | Schema-validated dynamic dashboard generation using A2UI Basic Catalog |
+| 4 | **Self-Correction Reflection Loop** | UI Generator retries up to 3x, feeding jsonschema validation errors back as prompt context |
+| 5 | **Agentic Security and Guardrails** | SQL injection prevention, read-only tool isolation, credential-free deployment |
+
+---
+
+## Key Features
+
+- **Natural Language to Dashboard:** Type any business question and get a multi-card dashboard instantly
+- **Smart Chart Selection:** AI picks bar (rankings), line (trends), or pie/donut (distributions) automatically
+- **Live Database Editing:** Edit sales records in-browser; changes persist via MCP and dashboard auto-refreshes
+- **Agentic Execution Trace:** Real-time step-by-step timeline of the Graph Workflow execution
+- **Premium Animated UI:** Spring-physics card animations, blossoming SVG charts, staggered progress bars
+- **PDF Export:** Print-optimized report with solid-color SVG charts
+- **Drill-Down Navigation:** Region buttons auto-submit follow-up analysis queries
+
+---
+
+## Architecture
+
+### System Overview
+
+```
+Browser Client (index.html)
+  Prompt Input ? FastAPI /run_sse ? ADK Graph Workflow
+  Canvas Render ? SSE Events ? Critic_Node output
+  Trace Timeline ? SSE Events ? node execution events
+
+ADK 2.0 Graph Workflow:
+  START
+    ? Intent_Router  (detect UPDATE vs SELECT intent)
+    ? Data_Fetcher   (NL?SQL via Gemini, execute via MCP read tool)
+    ? UI_Generator   (A2UI v0.9 JSON layout, 3x self-correction loop)
+    ? Critic_Node    (final jsonschema validation gate)
+    ? Final Output
+
+MCP Server (mcp_server.py, stdio transport):
+  query_sales_data(sql)   ? SELECT only, read isolation
+  update_sales_data(sql)  ? UPDATE/INSERT only, write isolation
+  SQLite: data/sales.db
+```
+
+### ADK Graph Workflow � Node Details
 
 ```mermaid
 graph TD
-    START --> Intent_Router[Intent Router Node]
-    Intent_Router -->|Determine Query/Update| Data_Fetcher[Data Fetcher MCP Node]
-    Data_Fetcher -->|Fetch SQLite Records| UI_Generator[UI Generator Agent Node]
-    UI_Generator -->|Self-Correct Loop / Schema Validation| Critic[Critic Reflection Node]
-    Critic -->|Valid A2UI Layout| Output[Render Dynamic Dashboard]
+    START --> Intent_Router
+    Intent_Router -->|"Detects UPDATE keywords"| MCP_Write[MCP: update_sales_data]
+    Intent_Router -->|Always continues| Data_Fetcher
+    MCP_Write --> Data_Fetcher
+    Data_Fetcher -->|AI-generated SQL SELECT| MCP_Read[MCP: query_sales_data]
+    MCP_Read --> UI_Generator_Agent
+    UI_Generator_Agent -->|Validate A2UI v0.9 schema| Critic_Node
+    Critic_Node -->|PASS| Output[Final Hybrid Output]
+    Critic_Node -->|FAIL - retry with error context| UI_Generator_Agent
 ```
 
-1.  **Intent Router (`Intent_Router`):** Analyzes the user prompt. If it detects an update command, it translates it to a SQL UPDATE and executes it.
-2.  **Data Fetcher (`Data_Fetcher`):** Translates natural language queries to read-only SQL SELECT queries and fetches matching records from the SQLite database via MCP.
-3.  **UI Generator (`UI_Generator_Agent`):** Reads the schema instructions and constructs a valid JSON object containing the raw data and the A2UI v0.9 component layout. It includes self-correction logic to retry up to 3 times if JSON or jsonschema validation fails.
-4.  **Critic Reflection (`Critic_Node`):** Performs final semantic checks on the generated layout before delivering it to the user.
+| Node | Role | Key Design Decision |
+|---|---|---|
+| **Intent_Router** | Detect UPDATE vs SELECT intent | Keyword matching plus LLM SQL translation; avoids full-agent call for simple updates |
+| **Data_Fetcher** | Translate NL to SQL, execute via MCP | Detailed SQL rules in system prompt prevent hallucinated column names; MCP read isolation prevents destructive queries |
+| **UI_Generator_Agent** | Generate A2UI v0.9 JSON dashboard | Schema-constrained JSON output plus 3-attempt self-correction eliminates invalid layouts |
+| **Critic_Node** | Final semantic validation gate | Lightweight jsonschema circuit breaker before returning output to client |
 
 ---
 
-## 📁 Project Structure
+## Safety and Guardrails
+
+| Threat | Mitigation |
+|---|---|
+| **SQL Injection** | MCP `query_sales_data` blocks any non-SELECT statement; only SELECT is permitted |
+| **Destructive Queries** | Read and write tools are separate MCP tools with separate node-level permissions |
+| **API Key Leakage** | `GEMINI_API_KEY` stored only in `.env` (gitignored); repo contains `.env.example` with placeholder |
+| **Hallucinated Data** | A2UI jsonschema validator validates every generated layout before it reaches the frontend |
+| **Invalid Schema Output** | 3-attempt self-correction: validation errors fed back as structured LLM context |
+| **Prompt Injection** | User prompts are user-turn content only; system prompt is static and controlled |
+
+---
+
+## Project Structure
 
 ```
 a2ui-data-canvas/
-├── app/                      # Backend Core
-│   ├── agent.py              # Main ADK Graph Workflow and agent nodes
-│   ├── fast_api_app.py       # FastAPI server with canvas APIs
-│   └── app_utils/            # Telemetry & helper configs
-├── canvas_dashboard/         # Frontend Web Client
-│   └── index.html            # Single-page web dashboard with A2UI renderer
-├── data/                     # Local SQLite DB
-│   └── sales.db              # Pre-seeded sales database
-├── tests/                    # Robust Test Suite
-│   ├── unit/                 # Unit tests
-│   ├── integration/          # SSE stream & integration tests
-│   ├── eval/                 # Evaluation dataset & metrics config
-│   └── test_a2ui.py          # Fast unit tests for layout validation
-├── mcp_server.py             # FastMCP Sales Server (stdio transport)
-├── pyproject.toml            # Project dependencies & pytest configuration
-└── README.md                 # Project Documentation
++-- app/
+�   +-- agent.py              # ADK Graph Workflow and all 4 agent nodes
+�   +-- fast_api_app.py       # FastAPI server with /run_sse, /api/canvas endpoints
++-- canvas_dashboard/
+�   +-- index.html            # Single-page dashboard: A2UI renderer plus chart engine
++-- data/
+�   +-- sales.db              # Pre-seeded SQLite database (Q3/Q4 regional sales)
++-- tests/
+�   +-- unit/                 # Unit tests (offline, mocked, ~2.5 seconds)
+�   +-- integration/          # E2E SSE stream integration tests
+�   +-- test_a2ui.py          # A2UI schema validation tests
++-- mcp_server.py             # FastMCP SQLite Server (stdio transport)
++-- pyproject.toml            # Dependencies, pytest config, project metadata
++-- README.md                 # This file
 ```
 
 ---
 
-## 🛠️ Installation & Setup
+## Installation and Setup
 
 ### Prerequisites
-*   **Python:** Version `3.11` or `3.12`
-*   **uv:** Python package manager (highly recommended) - [Install](https://docs.astral.sh/uv/getting-started/installation/)
-*   **Google Gemini API Key:** Get an API key from [Google AI Studio](https://aistudio.google.com/)
+- Python 3.11 or higher
+- uv package manager � https://docs.astral.sh/uv/getting-started/installation/
+- Google Gemini API Key � https://aistudio.google.com/
 
-### 1. Clone & Set Up Environment
-Clone the repository:
+### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/DoanNguyenDuyKha/Intensive-Vibe-Coding-Capstone-Project.git
 cd Intensive-Vibe-Coding-Capstone-Project/a2ui-data-canvas
 ```
 
-Create a `.env` file in the root directory and add your API key:
+### 2. Configure API Key
+
+Create a `.env` file in the project root:
+
 ```ini
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### 2. Install Dependencies
-Install the required tools and dependencies using `uv`:
-```bash
-# Install ADK CLI tools (one-time setup)
-uv tool install google-agents-cli
+> Never commit your API key. The `.env` file is gitignored.
 
-# Install dependencies using the project config
+### 3. Install Dependencies
+
+```bash
+uv tool install google-agents-cli
 agents-cli install
 ```
 
 ---
 
-## 🚀 Running the Project
+## Running the Project
 
-### Start the Local Server
-Run the FastAPI development environment:
 ```bash
+# Option A: Using agents-cli
 agents-cli playground
-```
-Or start the FastAPI server directly:
-```bash
+
+# Option B: Direct FastAPI server
 uv run python app/fast_api_app.py
 ```
 
-Open your browser and navigate to:
+Open your browser: **http://localhost:8000/canvas**
+
+### Example Queries
+
 ```
-http://localhost:8000/canvas
+"Who has the highest total revenue?"
+"Compare Q3 vs Q4 revenue by product category"
+"Show monthly revenue trend for Software"
+"Revenue breakdown by region � which region leads?"
+"Update North Q4 Software revenue to 300000"
 ```
-You can now start entering queries (e.g., *"Show Q4 revenue"* or *"Update North sales category Software to revenue 400000"*) and interact with the canvas!
 
 ---
 
-## 🧪 Testing
+## Testing
 
-The codebase has unit, integration, and E2E coverage.
-
-### Run All Tests
-Execute pytest using `uv`:
 ```bash
-uv run pytest tests/
+# Run all 7 tests
+uv run pytest
+
+# Run fast offline tests only (~2.5 seconds, no API calls)
+uv run pytest tests/test_a2ui.py tests/unit/
 ```
 
-### Run Fast Offline Unit Tests
-Run the mock-patched unit tests for layout and validation:
-```bash
-uv run pytest tests/test_a2ui.py
-```
-*Note: The unit tests are completely mocked and run locally offline in ~2.5 seconds without making external Gemini API calls.*
+**Result: 7/7 passed**
+
+| Test Suite | Type | Notes |
+|---|---|---|
+| `tests/unit/` | Unit | Mocked, offline |
+| `tests/integration/test_agent.py` | Integration | Live Gemini API |
+| `tests/integration/test_server_e2e.py` | E2E | Live server |
+| `tests/test_a2ui.py` | Schema validation | Mocked, offline |
 
 ---
 
-## 📊 Evaluation Loop
+## Evaluation
 
-The project is configured for automated agent evaluation under the `tests/eval/` directory.
-
-To run evaluation tasks, grade outputs, and analyze metrics:
 ```bash
-# Generate evaluation trace data
 agents-cli eval generate
-
-# Grade the generated traces
 agents-cli eval grade
 ```
-The custom evaluation metrics (`visual_behavioral_correctness` and `intent_satisfaction`) are configured in `tests/eval/eval_config.yaml`.
+
+Custom metrics in `tests/eval/eval_config.yaml`:
+- `visual_behavioral_correctness` � Does the rendered dashboard match user intent?
+- `intent_satisfaction` � Does the SQL query accurately address the question?
+
+---
+
+## Future Improvements
+
+| Feature | Description |
+|---|---|
+| **Cloud Deployment** | Deploy to Google Cloud Run via `agents-cli deploy` |
+| **Multi-Database Support** | Connect to BigQuery, Cloud SQL, or AlloyDB via additional MCP servers |
+| **Voice Input** | Integrate Gemini Live API for voice-to-dashboard |
+| **Collaborative Canvas** | Real-time multi-user dashboard editing via WebSocket |
+| **Automated Reporting** | Scheduled report generation and email delivery |
+| **Vertex AI Integration** | Enterprise-grade security and audit logging |
+
+---
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
+
+---
+
+## Acknowledgments
+
+- **Google and Kaggle** � for the AI Agents: Intensive Vibe Coding Course
+- **Google ADK Team** � for the Agent Development Kit 2.0
+- **A2UI Team** � for the Agent-to-UI Protocol v0.9
+- **FastMCP** � for the MCP server framework

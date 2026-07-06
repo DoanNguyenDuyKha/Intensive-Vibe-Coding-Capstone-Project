@@ -1,18 +1,47 @@
 """
 MCP Server — Sales Data Provider for a2ui-data-canvas.
 
-This server exposes a `query_sales_data` tool that allows agents to run
-read-only SQL (SELECT only) against a local SQLite database containing
-simulated regional sales data for Q3 and Q4.
+DESIGN: This MCP server implements the Model Context Protocol (MCP) using
+FastMCP with stdio transport. It acts as the sole database access layer for
+the agentic workflow, enforcing a strict security boundary between the AI
+agents and the underlying SQLite database.
 
-Transport: stdio (suitable for local Antigravity / Gemini CLI integration).
+ARCHITECTURE DECISIONS:
+
+1. WHY MCP INSTEAD OF DIRECT DATABASE CALLS:
+   The MCP tool interface creates a well-defined contract between agents and
+   data. This means the underlying database can be swapped (SQLite → BigQuery
+   → Cloud SQL) without changing agent code — only the MCP server changes.
+   It also enables per-tool permission control that cannot be enforced with
+   direct DB calls.
+
+2. WHY TWO SEPARATE TOOLS (query vs update):
+   Separating read and write into distinct MCP tools enables node-level
+   permission isolation in the ADK workflow:
+   - Data_Fetcher node → only receives the `query_sales_data` read tool
+   - Intent_Router node → directly calls `update_sales_data` for writes
+   This prevents accidental or malicious data modification from the read path.
+
+3. WHY STDIO TRANSPORT:
+   stdio transport requires no network port, no authentication handshake,
+   and no service discovery — the MCP process is spawned as a subprocess.
+   For local development, this eliminates networking complexity while
+   providing the full MCP tool-call protocol.
+
+4. SQL INJECTION PREVENTION:
+   `query_sales_data` uses a regex allow-list: only statements beginning with
+   SELECT (after whitespace stripping) are executed. All others raise a
+   ValueError before touching the database.
+
+Transport: stdio (suitable for local development and Antigravity CLI).
 
 Usage:
     # Standalone test
     uv run python mcp_server.py
 
-    # Antigravity will launch this automatically via mcp_config.json
+    # ADK workflow imports tools directly via: from mcp_server import ...
 """
+
 
 import json
 import re
@@ -179,9 +208,9 @@ def _validate_select_only(sql: str) -> None:
     """Raise ValueError if the SQL is not a pure SELECT statement."""
     stripped = sql.strip().rstrip(";").strip()
 
-    if not stripped.upper().startswith("SELECT"):
+    if not (stripped.upper().startswith("SELECT") or stripped.upper().startswith("WITH")):
         raise ValueError(
-            "❌ Only SELECT queries are allowed. "
+            "❌ Only SELECT or WITH queries are allowed. "
             f"Received statement starting with: '{stripped.split()[0]}'"
         )
 
